@@ -1,0 +1,21 @@
+{% load crispy_forms_tags %}
+{% load staticfiles %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Video Input</title>
+</head>
+<body>
+
+{% for message in messages %}
+    <div class="row">
+        <div class="col-md-12 col-sm-12 col-xs-12">
+            <div align="center"
+                 class="alert alert-{{ message.tags }}">{{ message }}</div>
+        </div>
+    </div>
+{% endfor %}
+{% crispy form %}
+</body>
+</html>

@@ -1,0 +1,137 @@
+{% load staticfiles %}
+{% load crispy_forms_tags %}
+<html>
+<head>
+    <title>Draw Canvas</title>
+</head>
+<script>
+    function init() {
+        canvas = document.getElementById('can');
+        ctx = canvas.getContext("2d");
+        base_image = new Image();
+        base_image.src = 'http://127.0.0.1:8000/{{ image_url }}';
+        base_image.onload = function () {
+            ctx.drawImage(base_image, 0, 0, 900, 600);
+        };
+        canvas.width = 900;
+        canvas.height = 600;
+        w = canvas.width;
+        h = canvas.height;
+        currX = 0;
+        currY = 0;
+        x = "red";
+        y = 2;
+        flag = false;
+        {% if line_coordinates %}
+            draw_line_custom({{ line_coordinates.0 }}, {{ line_coordinates.1 }}, {{ line_coordinates.2 }}, {{ line_coordinates.3 }});
+        {% endif %}
+        canvas.addEventListener("mousemove", function (e) {
+            findxy('move', e)
+        }, false);
+        canvas.addEventListener("mousedown", function (e) {
+            findxy('down', e)
+        }, false);
+        canvas.addEventListener("mouseup", function (e) {
+            findxy('up', e)
+        }, false);
+        canvas.addEventListener("mouseout", function (e) {
+            findxy('out', e)
+        }, false);
+
+    }
+
+    function draw() {
+        ctx.beginPath();
+        ctx.moveTo(prevX, prevY);
+        ctx.lineTo(currX, currY);
+        ctx.strokeStyle = x;
+        ctx.lineWidth = y;
+        ctx.stroke();
+        ctx.closePath();
+    }
+
+    function erase() {
+        var m = confirm("Want to clear");
+        if (m) {
+            location.reload();
+        }
+    }
+
+    function save() {
+        form = document.getElementById("co_ords_form");
+        input = document.getElementById("value");
+        input.value = init_x + "|" + init_y + "/" + currX + "|" + currY;
+        form.submit();
+    }
+
+    function draw_line() {
+        ctx.beginPath();
+        ctx.moveTo(init_x, init_y);
+        ctx.lineTo(currX, currY);
+        ctx.strokeStyle = x;
+        ctx.lineWidth = y;
+        ctx.stroke();
+        ctx.closePath();
+        console.log(init_x + "|" + init_y + "/" + currX + "|" + currY);
+    }
+
+    function draw_line_custom(init_x, init_y, currX, currY) {
+        ctx.beginPath();
+        ctx.moveTo(init_x, init_y);
+        ctx.lineTo(currX, currY);
+        ctx.strokeStyle = "red";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.closePath();
+    }
+
+    function findxy(res, e) {
+        if (res == 'down') {
+            prevX = currX;
+            prevY = currY;
+            currX = e.clientX - canvas.offsetLeft;
+            currY = e.clientY - canvas.offsetTop;
+
+            flag = true;
+            init_x = currX;
+            init_y = currY;
+
+        }
+        if (res == 'up' || res == "out") {
+            flag = false;
+            draw_line();
+
+        }
+        if (res == 'move') {
+            if (flag) {
+                prevX = currX;
+                prevY = currY;
+                currX = e.clientX - canvas.offsetLeft;
+                currY = e.clientY - canvas.offsetTop;
+                {#draw();#}
+            }
+        }
+    }
+
+</script>
+<body onload="init()">
+{% for message in messages %}
+    <div class="row">
+        <div class="col-md-12 col-sm-12 col-xs-12">
+            <div align="center"
+                 class="alert alert-{{ message.tags }}">{{ message }}</div>
+        </div>
+    </div>
+{% endfor %}
+<canvas id="can" width="400" height="400" style="border:2px solid;"></canvas>
+<input type="button" value="save" id="btn" size="30" onclick="save()">
+<input type="button" value="clear" id="clr" size="23" onclick="erase()">
+<a href="{% url 'start_processing' video_id %}">Start Processing</a>
+
+<form method="post" id="co_ords_form">
+    {% csrf_token %}
+    <input type="text" hidden id="path" name="path" value="{{ image_url }}">
+    <input type="text" hidden id="value" name="value">
+</form>
+</body>
+</html>
