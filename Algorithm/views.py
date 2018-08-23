@@ -1,3 +1,4 @@
+import time
 from threading import Thread
 
 import cv2
@@ -43,7 +44,10 @@ def draw_canvas(request, pk):
         init, end = coords.split("/")
         ix, iy = init.split("|")
         ex, ey = end.split("|")
-        cap = cv2.VideoCapture(video.file.path)
+        if video.file:
+            cap = cv2.VideoCapture(video.file.path)
+        else:
+            cap = cv2.VideoCapture(video.ip_link)
         ret, frame = cap.read()
         width = frame.shape[1]
         height = frame.shape[0]
@@ -87,15 +91,16 @@ def initiate_process(pk):
     line_coordinates = [video.line_coord_init_x, video.line_coord_init_y, video.line_coord_end_x,
                         video.line_coord_end_y]
     path = video.file.path if video.file else video.ip_link
-    DeepSenseTrafficManagement(line_coordinates, video.file.name, pk, path)
+    file = video.file.name if video.file else "IPCAM"
+    DeepSenseTrafficManagement(line_coordinates, file, pk, path)
 
 
 def stop_processes(request):
     video_id = request.GET.get("video_id")
-    flag = request.GET.get("flag")
     video = Videos.objects.get(id=video_id)
-    video.processed = flag
+    video.processed = True
     video.save()
-    return HttpResponse("Flag Set")
-
-
+    time.sleep(3)
+    video.processed = False
+    video.save()
+    return HttpResponse("Process Stopped")

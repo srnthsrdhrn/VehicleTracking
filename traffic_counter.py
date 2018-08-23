@@ -1,17 +1,19 @@
-import gc
 import os
 import time
+from datetime import datetime
 from threading import Thread
 from queue import PriorityQueue, Queue
 import cv2
 import numpy as np
-
-from Algorithm.models import Videos, VehicleCount
+from persistqueue import SQLiteQueue
+from Algorithm.models import Videos
 from utils import run
 from utils.ArgumentsHandler import argHandler
 
-inputQueue = Queue()
+date = datetime.now().strftime("%d_%m_%Y_%H_%M_%S")
+inputQueue = SQLiteQueue(path="queue_db/", name="table_" + date, multithreading=True)
 resultQueue = PriorityQueue()
+buffer_queue = Queue()
 
 
 def image_resize(image, width=None, height=None, inter=cv2.INTER_AREA):
@@ -72,6 +74,7 @@ class DeepSenseTrafficManagement:
         """
         self.exit_threads = False
         self.init_workers()
+        self.start_buffer_feeder()
         self.start_feeder()
         self.start_collection()
         self.start_checker(video_id)
@@ -87,24 +90,36 @@ class DeepSenseTrafficManagement:
             video = Videos.objects.get(id=video_id)
             if video.processed:
                 self.exit_threads = True
+                while True:
+                    try:
+                        inputQueue.get(timeout=5)
+                    except Exception:
+                        break
+                while True:
+                    try:
+                        resultQueue.get(timeout=5)
+                    except Exception:
+                        break
+                while True:
+                    try:
+                        buffer_queue.get(timeout=5)
+                    except Exception:
+                        break
                 self.source.release()
                 self.out.release()
-                gc.collect()
                 print("Exit Signal Received. Exiting Threads and Collecting Garbage")
                 break
 
     def input_source(self, file, path):
-        if file == 'camera':
-            file = 0
-            self.frame_rate = 1
-            camera = cv2.VideoCapture(file)
+        if file == "IPCAM":
+            camera = cv2.VideoCapture(path)
+            date = datetime.now().strftime("%d_%m_%Y_%H_%M_%S")
+            file = file + "_" + date
         else:
             assert os.path.isfile(path), \
                 'file {} does not exist'.format(file)
-            # file = 'rtsp://service:Smart#123@192.168.0.133/rtsp_tunnel?h26x=4&line=1&inst=1'
             camera = cv2.VideoCapture(path)
         self.frame_rate = round(camera.get(cv2.CAP_PROP_FPS))
-
         self.frame_height = camera.get(cv2.CAP_PROP_FRAME_HEIGHT)
         self.frame_width = camera.get(cv2.CAP_PROP_FRAME_WIDTH)
         self.Tracker.frame_width = self.frame_width
@@ -113,14 +128,12 @@ class DeepSenseTrafficManagement:
         fourcc = cv2.VideoWriter_fourcc(*'DIVX')
         # date = datetime.now().strftime("%d_%m_%Y_%H_%M_%S")
         file = file.split(".")[0]
-        # LOCATION = "\\\\BOSCH.COM\\DfsRB\\DfsIN\\LOC\\Cob\\NE1\\Function\\Aerospace_Deep_Sense\\02_Development\\05_Exchange_Folder\\08_Srinath\\Processed Video 9th August\\Toll Booth\\{}.mp4 ".format(file)
         OUTPUT_FILE_NAME = 'media\processed\{}.mp4'.format(file)
-        # OUTPUT_FILE_NAME = LOCATION
-        VIDEO_SCALE_RATIO = 0.5
+        # self.VIDEO_SCALE_RATIO = 1
         RATIO_OF_BELOW_BOX = 0.35
         _, frame = camera.read()
-        frame = cv2.resize(frame, None, fx=VIDEO_SCALE_RATIO, fy=VIDEO_SCALE_RATIO,
-                           interpolation=cv2.INTER_LINEAR)
+        # frame = cv2.resize(frame, None, fx=self.VIDEO_SCALE_RATIO, fy=self.VIDEO_SCALE_RATIO,
+        #                    interpolation=cv2.INTER_LINEAR)
         width = frame.shape[1]
         height = frame.shape[0]
         b_height = round(frame.shape[0] * RATIO_OF_BELOW_BOX)
@@ -166,7 +179,7 @@ class DeepSenseTrafficManagement:
                 break
             try:
                 # if flag:
-                counter, frame = inputQueue.get()
+                counter, frame = inputQueue.get(timeout=300)
                 # flag = False
                 # else:
                 #     counter, frame = inputQueue.get(timeout=60)
@@ -189,6 +202,27 @@ class DeepSenseTrafficManagement:
                     print("Worker Shutdown. Waited 60 seconds for Queue")
                 break
 
+    def start_buffer_feeder(self):
+        t = Thread(target=self.buffer_feeder)
+        t.daemon = True
+        t.start()
+
+    def buffer_feeder(self):
+        global inputQueue
+        self.counter = 0
+        while True:
+            if self.exit_threads:
+                print("Exiting Buffer Feeder")
+                break
+            frame = self.raw_video()
+            self.counter += 1
+            if frame is None:
+                # Video fully queued. Wait for workers to finish and exit
+                print("Frame None Exiting Buffer Feeder")
+                break
+            buffer_queue.put((self.counter, frame))
+            # time.sleep(0.3)
+
     def feeder(self):
         """
         Feeder Thread Function. This thread feeds the frames from the input source into the input queue. This has been
@@ -201,20 +235,16 @@ class DeepSenseTrafficManagement:
         If the RAM usage keeps increasing at a constant rate, increase the sleeping time.
         :return: None
         """
-        global inputQueue
-        self.counter = 0
         while True:
             if self.exit_threads:
                 print("Exiting Feeder")
                 break
-            frame = self.raw_video()
-            self.counter += 1
-            if frame is None:
-                # Video fully queued. Wait for workers to finish and exit
-                print("Frame None Exiting")
+            try:
+                counter, frame = buffer_queue.get(timeout=300)
+                inputQueue.put((counter, frame))
+            except Exception:
+                print("Buffer Empty Exiting Feeder")
                 break
-            inputQueue.put((self.counter, frame))
-            time.sleep(0.3)
 
     def init_workers(self):
         global inputQueue
@@ -251,9 +281,12 @@ class DeepSenseTrafficManagement:
         # counter, frame = resultQueue.get()
         # return frame
         try:
-            counter, detections, boxes_final, imgcv = resultQueue.get()
-            while self.check_counter > counter:
-                counter, detections, boxes_final, imgcv = resultQueue.get()
+            while True:
+                counter, detections, boxes_final, imgcv = resultQueue.get(timeout=300)
+                if self.check_counter + 1 == counter:
+                    break
+                else:
+                    resultQueue.put((counter, detections, boxes_final, imgcv))
             self.check_counter = counter
         except Exception:
             print("Result Queue Empty and Timed out after 30 seconds")
@@ -320,11 +353,10 @@ class DeepSenseTrafficManagement:
             FONT_SCALE = 0.4
             FONT_SCALE_HEADING = 0.6
             FONT_COLOR = (0, 0, 0)
-            VIDEO_SCALE_RATIO = 0.5
             RATIO_OF_BELOW_BOX = 0.35
-
-            frame = cv2.resize(self.current_frame, None, fx=VIDEO_SCALE_RATIO, fy=VIDEO_SCALE_RATIO,
-                               interpolation=cv2.INTER_LINEAR)
+            frame = self.current_frame
+            # frame = cv2.resize(self.current_frame, None, fx=self.VIDEO_SCALE_RATIO, fy=self.VIDEO_SCALE_RATIO,
+            #                    interpolation=cv2.INTER_LINEAR)
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2BGRA)
             width = frame.shape[1]
             height = frame.shape[0]

@@ -8,7 +8,7 @@ from Algorithm.models import Videos
 class VideoProcessForm(forms.ModelForm):
     class Meta:
         model = Videos
-        exclude = ['created_at']
+        fields = ['ip_link', 'file']
 
     def __init__(self, *args, **kwargs):
         super(VideoProcessForm, self).__init__(*args, **kwargs)
