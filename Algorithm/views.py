@@ -47,7 +47,10 @@ def draw_canvas(request, pk):
         if video.file:
             cap = cv2.VideoCapture(video.file.path)
         else:
-            cap = cv2.VideoCapture(video.ip_link)
+            if video.ip_link == '0':
+                cap = cv2.VideoCapture(0)
+            else:
+                cap = cv2.VideoCapture(video.ip_link)
         ret, frame = cap.read()
         width = frame.shape[1]
         height = frame.shape[0]
@@ -64,7 +67,10 @@ def draw_canvas(request, pk):
             cv2.imwrite(path, frame)
             cap.release()
         elif video.ip_link:
-            cap = cv2.VideoCapture(video.ip_link)
+            if video.ip_link == '0':
+                cap = cv2.VideoCapture(0)
+            else:
+                cap = cv2.VideoCapture(video.ip_link)
             ret, frame = cap.read()
             path = "media/tmp/{}.jpg".format("test")
             cv2.imwrite(path, frame)

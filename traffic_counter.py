@@ -9,11 +9,12 @@ from persistqueue import SQLiteQueue
 from Algorithm.models import Videos
 from utils import run
 from utils.ArgumentsHandler import argHandler
+from diskcache import Deque
 
 date = datetime.now().strftime("%d_%m_%Y_%H_%M_%S")
 inputQueue = SQLiteQueue(path="queue_db/", name="table_" + date, multithreading=True)
 resultQueue = PriorityQueue()
-buffer_queue = Queue()
+buffer_queue = Deque(directory="media/tmp/")
 
 
 def image_resize(image, width=None, height=None, inter=cv2.INTER_AREA):
@@ -88,7 +89,7 @@ class DeepSenseTrafficManagement:
     def checker(self, video_id):
         while True:
             video = Videos.objects.get(id=video_id)
-            if video.processed:
+            if video.processed or self.exit_threads:
                 self.exit_threads = True
                 while True:
                     try:
@@ -102,7 +103,7 @@ class DeepSenseTrafficManagement:
                         break
                 while True:
                     try:
-                        buffer_queue.get(timeout=5)
+                        buffer_queue.pop()
                     except Exception:
                         break
                 self.source.release()
@@ -112,7 +113,10 @@ class DeepSenseTrafficManagement:
 
     def input_source(self, file, path):
         if file == "IPCAM":
-            camera = cv2.VideoCapture(path)
+            if path == '0':
+                camera = cv2.VideoCapture(0)
+            else:
+                camera = cv2.VideoCapture(path)
             date = datetime.now().strftime("%d_%m_%Y_%H_%M_%S")
             file = file + "_" + date
         else:
@@ -208,7 +212,7 @@ class DeepSenseTrafficManagement:
         t.start()
 
     def buffer_feeder(self):
-        global inputQueue
+        global inputQueue, buffer_queue
         self.counter = 0
         while True:
             if self.exit_threads:
@@ -220,7 +224,8 @@ class DeepSenseTrafficManagement:
                 # Video fully queued. Wait for workers to finish and exit
                 print("Frame None Exiting Buffer Feeder")
                 break
-            buffer_queue.put((self.counter, frame))
+            time.sleep(0.5)
+            buffer_queue.append((self.counter, frame))
             # time.sleep(0.3)
 
     def feeder(self):
@@ -235,12 +240,14 @@ class DeepSenseTrafficManagement:
         If the RAM usage keeps increasing at a constant rate, increase the sleeping time.
         :return: None
         """
+        global inputQueue, buffer_queue
         while True:
             if self.exit_threads:
                 print("Exiting Feeder")
                 break
             try:
-                counter, frame = buffer_queue.get(timeout=300)
+                counter, frame = buffer_queue.popleft()
+                time.sleep(0.5)
                 inputQueue.put((counter, frame))
             except Exception:
                 print("Buffer Empty Exiting Feeder")
@@ -266,7 +273,6 @@ class DeepSenseTrafficManagement:
         """
         global inputQueue
         global resultQueue
-        self.processes = []
         self.feeder_thread = Thread(target=self.feeder)
         self.feeder_thread.daemon = True
         self.feeder_thread.start()
@@ -281,13 +287,13 @@ class DeepSenseTrafficManagement:
         # counter, frame = resultQueue.get()
         # return frame
         try:
-            while True:
-                counter, detections, boxes_final, imgcv = resultQueue.get(timeout=300)
-                if self.check_counter + 1 == counter:
-                    break
-                else:
-                    resultQueue.put((counter, detections, boxes_final, imgcv))
-            self.check_counter = counter
+            # while True:
+            counter, detections, boxes_final, imgcv = resultQueue.get(timeout=300)
+                # if self.check_counter + 1 == counter:
+                #     break
+                # else:
+                #     resultQueue.put((counter, detections, boxes_final, imgcv))
+            # self.check_counter = counter
         except Exception:
             print("Result Queue Empty and Timed out after 30 seconds")
             return None
@@ -459,6 +465,7 @@ class DeepSenseTrafficManagement:
             img = np.row_stack((frame, blank_image))
             self.out.write(img)
             self.current_frame = self.get_postprocessed()
+        self.exit_threads = True
         self.out.release()
         self.source.release()
         if not self.exit_threads:
