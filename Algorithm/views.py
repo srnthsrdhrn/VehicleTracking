@@ -2,12 +2,20 @@ import time
 from threading import Thread
 
 import cv2
+from django.contrib import messages
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
 
 # Create your views here.
+from django.urls import reverse
+from django.views.generic import ListView, UpdateView, DeleteView
+
 from Algorithm.forms import VideoProcessForm
 from Algorithm.models import Videos
+
+
+def landing_page(request):
+    return render(request, 'theme/admin/base.html')
 
 
 def get_video_input(request):
@@ -58,7 +66,7 @@ def draw_canvas(request, pk):
             int(ix), int(iy), int(ex), int(ey), width, height)
         video.save()
         cap.release()
-        path = data.get("path")
+        return redirect("list_video")
     else:
         if video.file:
             cap = cv2.VideoCapture(video.file.path)
@@ -88,7 +96,8 @@ def start_processing(request, pk):
     t = Thread(target=initiate_process, args=(pk,))
     t.daemon = True
     t.start()
-    return HttpResponse("Processing Started")
+    messages.success(request, "Processing Started")
+    return redirect("list_video")
 
 
 def initiate_process(pk):
@@ -101,12 +110,34 @@ def initiate_process(pk):
     DeepSenseTrafficManagement(line_coordinates, file, pk, path)
 
 
-def stop_processes(request):
-    video_id = request.GET.get("video_id")
-    video = Videos.objects.get(id=video_id)
+def stop_processes(request, pk):
+    video = Videos.objects.get(id=pk)
     video.processed = True
     video.save()
     time.sleep(3)
     video.processed = False
     video.save()
-    return HttpResponse("Process Stopped")
+    messages.success(request, "Video Processing Stopped")
+    return redirect("list_video")
+
+
+class VideoList(ListView):
+    model = Videos
+    template_name = 'algorithm/list_Video.html'
+
+
+# class DepartmentUpdate(UpdateView):
+#     model = Videos
+#     fields = ['username', 'first_name', 'last_name', 'email', 'institution', 'academic', 'code', 'rfidvalue']
+#     template_name = 'algorithm/update.html'
+#
+#     def get_success_url(self):
+#         return reverse('list_department')
+
+
+class DeleteVideo(DeleteView):
+    model = Videos
+    template_name = 'algorithm/delete.html'
+
+    def get_success_url(self):
+        return reverse('list_video')

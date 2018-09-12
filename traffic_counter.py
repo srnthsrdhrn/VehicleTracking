@@ -14,7 +14,7 @@ from diskcache import Deque
 date = datetime.now().strftime("%d_%m_%Y_%H_%M_%S")
 inputQueue = SQLiteQueue(path="queue_db/", name="table_" + date, multithreading=True)
 resultQueue = PriorityQueue()
-buffer_queue = Deque(directory="media/tmp/")
+buffer_queue = Deque(directory="media/dequeue_tmp/")
 
 
 def image_resize(image, width=None, height=None, inter=cv2.INTER_AREA):
@@ -124,6 +124,8 @@ class DeepSenseTrafficManagement:
                 'file {} does not exist'.format(file)
             camera = cv2.VideoCapture(path)
         self.frame_rate = round(camera.get(cv2.CAP_PROP_FPS))
+        if self.frame_rate == 0:
+            self.frame_rate = 10
         self.frame_height = camera.get(cv2.CAP_PROP_FRAME_HEIGHT)
         self.frame_width = camera.get(cv2.CAP_PROP_FRAME_WIDTH)
         self.Tracker.frame_width = self.frame_width
@@ -249,7 +251,10 @@ class DeepSenseTrafficManagement:
                 counter, frame = buffer_queue.popleft()
                 time.sleep(0.5)
                 inputQueue.put((counter, frame))
-            except Exception:
+            except IndexError:
+                print("Buffer Queue Empty, Waiting...")
+                time.sleep(5)
+            except Exception as e:
                 print("Buffer Empty Exiting Feeder")
                 break
 

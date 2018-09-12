@@ -1,9 +1,7 @@
+{% extends 'theme/admin/base.html' %}
 {% load staticfiles %}
 {% load crispy_forms_tags %}
-<html>
-<head>
-    <title>Draw Canvas</title>
-</head>
+{% block headscript %}
 <script>
     function init() {
         canvas = document.getElementById('can');
@@ -108,30 +106,20 @@
                 prevY = currY;
                 currX = e.clientX - canvas.offsetLeft;
                 currY = e.clientY - canvas.offsetTop;
-                {#draw();#}
+
             }
         }
     }
 
 </script>
-<body onload="init()">
-{% for message in messages %}
-    <div class="row">
-        <div class="col-md-12 col-sm-12 col-xs-12">
-            <div align="center"
-                 class="alert alert-{{ message.tags }}">{{ message }}</div>
-        </div>
-    </div>
-{% endfor %}
+    {% endblock %}
+{% block content_wrapper %}
 <canvas id="can" width="400" height="400" style="border:2px solid;"></canvas>
 <input type="button" value="save" id="btn" size="30" onclick="save()">
 <input type="button" value="clear" id="clr" size="23" onclick="erase()">
-<a href="{% url 'start_processing' video_id %}">Start Processing</a>
-
 <form method="post" id="co_ords_form">
     {% csrf_token %}
     <input type="text" hidden id="path" name="path" value="{{ image_url }}">
     <input type="text" hidden id="value" name="value">
 </form>
-</body>
-</html>
+{% endblock %}

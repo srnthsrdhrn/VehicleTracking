@@ -1,0 +1,63 @@
+{% extends 'theme/admin/base.html' %}
+{% block content_wrapper %}
+    <div class="container-fluid">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <br>
+
+                <a href="{% url 'get_video_input' %}" class="btn btn-primary pull-right"> Add Video</a>
+                <br>
+
+                <h3 align="center">Video List</h3>
+
+            </div>
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped table-hover dataTable container-fluid" id="myTable">
+                    <thead>
+                    <tr>
+                        <th>Sno</th>
+                        <th>File</th>
+                        <th>Ip link</th>
+                        <th>start x</th>
+                        <th>start y</th>
+                        <th>end x</th>
+                        <th>end y</th>
+                        <th>Processed</th>
+                        <th> Created At</th>
+                        <th> Actions</th>
+                    </tr>
+                    </thead>
+                    {% for video in videos_list %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ video.file }}</td>
+                            <td>{{ video.ip_link }}</td>
+                            <td>{{ video.line_coord_init_x }}</td>
+                            <td>{{ video.line_coord_init_y }}</td>
+                            <td>{{ video.line_coord_end_x }}</td>
+                            <td>{{ video.line_coord_end_y }}</td>
+                            <td>{{ video.processed }}</td>
+                            <td>{{ video.created_at }}</td>
+                            <td>
+                                <a href="{% url 'start_processing' video.id %}">
+                                    <span class="glyphicon glyphicon-star">Start Processing</span>
+                                </a>
+                                <br>
+                                <br>
+                                <a href="{% url 'delete_video' video.id %}">
+                                    <span class="glyphicon glyphicon-trash">Delete</span>
+                                </a>
+                                <br>
+                                <br>
+                                <a href="{% url 'stop_process' video.id %}">
+                                    <span class="glyphicon glyphicon-stop">Stop Processing</span>
+                                </a>
+
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,580 @@
+{% load staticfiles %}
+<!DOCTYPE html>
+<!--
+This is a starter template page. Use this page to start your new project from
+scratch. This page gets rid of all links and provides the needed markup only.
+-->
+<html>
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    {% block page_title %}
+        <title>Smart City</title>
+    {% endblock %}
+
+    {# Google Singin Script URL #}
+    <meta name="google-signin-scope" content="profile email">
+    <meta name="google-signin-client_id"
+          content="176891659027-o8lvt3ri3ujjka3s98bk0p613ul7b61s.apps.googleusercontent.com">
+    <script src="https://apis.google.com/js/platform.js?onload=onLoad" async defer></script>
+    <script src="https://apis.google.com/js/platform.js" async defer></script>
+
+    <!-- jQuery 2.2.3 -->
+    <script src="{% static 'admin_theme/plugins/jQuery/jquery-2.2.3.min.js' %}"></script>
+
+    <!-- Tell the browser to be responsive to screen width -->
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <!-- Bootstrap 3.3.6 -->
+    <link rel="stylesheet" href="{% static 'admin_theme/bootstrap/css/bootstrap.min.css' %}">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.5.0/css/font-awesome.min.css">
+    <!-- Ionicons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ionicons/2.0.1/css/ionicons.min.css">
+    <!-- Theme style -->
+    <link rel="stylesheet" href="{% static 'admin_theme/dist/css/AdminLTE.min.css' %}">
+    <!-- AdminLTE Skins. We have chosen the skin-blue for this starter
+          page. However, you can choose any other skin. Make sure you
+          apply the skin class to the body tag so the changes take effect.
+    -->
+    <link rel="stylesheet" href="{% static 'admin_theme/dist/css/skins/skin-blue.min.css' %}">
+    <link href="{% static 'admin_theme/plugins/jquery-datatable/skin/bootstrap/css/dataTables.bootstrap.css' %}"
+          rel="stylesheet">
+    <style>
+        .btn1 {
+            margin: 10px;
+        }
+    </style>
+    {% block headscript %}
+
+
+    {% endblock %}
+    {% block css %}
+
+    {% endblock %}
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+  <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+  <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+
+  <![endif]-->
+</head>
+<!--
+BODY TAG OPTIONS:
+=================
+Apply one or more of the following classes to get the
+desired effect
+|---------------------------------------------------------|
+| SKINS         | skin-blue                               |
+|               | skin-black                              |
+|               | skin-purple                             |
+|               | skin-yellow                             |
+|               | skin-red                                |
+|               | skin-green                              |
+|---------------------------------------------------------|
+|LAYOUT OPTIONS | fixed                                   |
+|               | layout-boxed                            |
+|               | layout-top-nav                          |
+|               | sidebar-collapse                        |
+|               | sidebar-mini                            |
+|---------------------------------------------------------|
+-->
+<body class="hold-transition skin-blue fixed" onload="init()">
+<div class="wrapper">
+
+    <!-- Main Header -->
+    <header class="main-header">
+
+        {% block header %}
+            <!-- Logo -->
+            <a href="" class="logo">
+                <!-- mini logo for sidebar mini 50x50 pixels -->
+                <span class="logo-mini"><b>Bosch</b></span>
+                <!-- logo for regular state and mobile devices -->
+                <span class="logo-lg"><b>SmartCity</b></span>
+            </a>
+
+            {% block header_navbar %}
+                <!-- Header Navbar -->
+                <nav class="navbar navbar-static-top" role="navigation">
+                    <!-- Sidebar toggle button-->
+                    <a href="#" class="sidebar-toggle" data-toggle="offcanvas" role="button">
+                        <span class="sr-only">Toggle navigation</span>
+                    </a>
+                    <!-- Navbar Right Menu -->
+                    <div class="navbar-custom-menu">
+                        <ul class="nav navbar-nav">
+                            <!-- Messages: style can be found in dropdown.less-->
+                            <li class="dropdown messages-menu">
+                                <!-- Menu toggle button -->
+                                <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                    <i class="fa fa-envelope-o"></i>
+                                    <span class="label label-success">4</span>
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li class="header">You have 4 messages</li>
+                                    <li>
+                                        <!-- inner menu: contains the messages -->
+                                        <ul class="menu">
+                                            <li><!-- start message -->
+                                                <a href="#">
+                                                    <div class="pull-left">
+                                                        <!-- User Image -->
+                                                        <img src="{% static 'admin_theme/dist/img/user2-160x160.jpg' %}"
+                                                             class="img-circle" alt="User Image">
+                                                    </div>
+                                                    <!-- Message title and timestamp -->
+                                                    <h4>
+                                                        Support Team
+                                                        <small><i class="fa fa-clock-o"></i> 5 mins</small>
+                                                    </h4>
+                                                    <!-- The message -->
+                                                    <p>Why not buy a new awesome theme?</p>
+                                                </a>
+                                            </li>
+                                            <!-- end message -->
+                                        </ul>
+                                        <!-- /.menu -->
+                                    </li>
+                                    <li class="footer"><a href="#">See All Messages</a></li>
+                                </ul>
+                            </li>
+                            <!-- /.messages-menu -->
+
+                            <!-- Notifications Menu -->
+                            <li class="dropdown notifications-menu">
+                                <!-- Menu toggle button -->
+                                <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                    <i class="fa fa-bell-o"></i>
+                                    <span class="label label-warning">10</span>
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li class="header">You have 10 notifications</li>
+                                    <li>
+                                        <!-- Inner Menu: contains the notifications -->
+                                        <ul class="menu">
+                                            <li><!-- start notification -->
+                                                <a href="#">
+                                                    <i class="fa fa-users text-aqua"></i> 5 new members joined today
+                                                </a>
+                                            </li>
+                                            <!-- end notification -->
+                                        </ul>
+                                    </li>
+                                    <li class="footer"><a href="#">View all</a></li>
+                                </ul>
+                            </li>
+                            <!-- Tasks Menu -->
+                            <li class="dropdown tasks-menu">
+                                <!-- Menu Toggle Button -->
+                                <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                    <i class="fa fa-flag-o"></i>
+                                    <span class="label label-danger">9</span>
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li class="header">You have 9 tasks</li>
+                                    <li>
+                                        <!-- Inner menu: contains the tasks -->
+                                        <ul class="menu">
+                                            <li><!-- Task item -->
+                                                <a href="#">
+                                                    <!-- Task title and progress text -->
+                                                    <h3>
+                                                        Design some buttons
+                                                        <small class="pull-right">20%</small>
+                                                    </h3>
+                                                    <!-- The progress bar -->
+                                                    <div class="progress xs">
+                                                        <!-- Change the css width attribute to simulate progress -->
+                                                        <div class="progress-bar progress-bar-aqua" style="width: 20%"
+                                                             role="progressbar" aria-valuenow="20" aria-valuemin="0"
+                                                             aria-valuemax="100">
+                                                            <span class="sr-only">20% Complete</span>
+                                                        </div>
+                                                    </div>
+                                                </a>
+                                            </li>
+                                            <!-- end task item -->
+                                        </ul>
+                                    </li>
+                                    <li class="footer">
+                                        <a href="#">View all tasks</a>
+                                    </li>
+                                </ul>
+                            </li>
+                            <!-- User Account Menu -->
+                            <li class="dropdown user user-menu">
+                                <!-- Menu Toggle Button -->
+                                <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                    <!-- The user image in the navbar-->
+                                    <img src="{{ request.user.profile_pic_url }}" class="user-image" alt="User Image">
+                                    <!-- hidden-xs hides the username on small devices so only the image appears. -->
+                                    <span class="hidden-xs">{{ request.user.first_name }}</span>
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <!-- The user image in the menu -->
+                                    <li class="user-header">
+                                        <img src="{{ request.user.profile_pic_url }}"
+                                             class="img-circle" alt="User Image">
+
+                                        <p>
+                                            {{ user_img }} {{ request.user.first_name }}
+
+                                        </p>
+                                    </li>
+                                    <!-- Menu Body -->
+                                    <li class="user-body">
+                                        <div class="row">
+                                            <div class="col-xs-4 text-center">
+                                                <a href="#">Followers</a>
+                                            </div>
+                                            <div class="col-xs-4 text-center">
+                                                <a href="#">Sales</a>
+                                            </div>
+                                            <div class="col-xs-4 text-center">
+                                                <a href="#">Friends</a>
+                                            </div>
+                                        </div>
+                                        <!-- /.row -->
+                                    </li>
+                                    <!-- Menu Footer-->
+                                    <li class="user-footer">
+                                        <div class="pull-left">
+{#                                            <a href="{% url 'profile' %}" class="btn btn-default btn-flat">Profile</a>#}
+                                        </div>
+                                        <div class="pull-right">
+{#                                            <a href="{% url 'logout' %}" onclick="signOut()"#}
+{#                                               class="btn btn-default btn-flat">Sign out</a>#}
+                                        </div>
+                                    </li>
+                                </ul>
+                            </li>
+                            <!-- Control Sidebar Toggle Button -->
+                            <li>
+                                <a href="#" data-toggle="control-sidebar"><i class="fa fa-gears"></i></a>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+            {% endblock %}
+        {% endblock %}
+
+    </header>
+    {% block sidebar_left %}
+        <!-- Left side column. contains the logo and sidebar -->
+        <aside class="main-sidebar">
+
+            <!-- sidebar: style can be found in sidebar.less -->
+            <section class="sidebar">
+
+                <!-- Sidebar user panel (optional) -->
+                <div class="user-panel">
+                    <div class="pull-left image">
+                        <img src="{{ request.user.profile_pic_url }}" class="img-circle" alt="User Image">
+                    </div>
+                    <div class="pull-left info">
+                        <p>{{ username }}</p>
+                        <!-- Status -->
+                        <p>{{ role }}</p>
+
+                        <a href="#"><i class="fa fa-circle text-success"></i> Online</a>
+                    </div>
+                </div>
+
+                <!-- search form (Optional) -->
+                <form action="#" method="get" class="sidebar-form">
+                    <div class="input-group">
+                        <input type="text" name="q" class="form-control" placeholder="Search...">
+                        <span class="input-group-btn">
+                <button type="submit" name="search" id="search-btn" class="btn btn-flat"><i class="fa fa-search"></i>
+                </button>
+              </span>
+                    </div>
+                </form>
+                <!-- /.search form -->
+
+                <!-- Sidebar Menu -->
+                <ul class="sidebar-menu">
+                    <li class="header">HEADER</li>
+                    <!-- Optionally, you can add icons to the links -->
+                    <li class="active"><a href="#"><i class="fa fa-link"></i> <span>Link</span></a></li>
+                    <li><a href="#"><i class="fa fa-link"></i> <span>Another Link</span></a></li>
+                    <li class="treeview">
+                        <a href="#"><i class="fa fa-link"></i> <span>Multilevel</span>
+                            <span class="pull-right-container">
+              <i class="fa fa-angle-left pull-right"></i>
+            </span>
+                        </a>
+                        <ul class="treeview-menu">
+                            <li><a href="#">Link in level 2</a></li>
+                            <li><a href="#">Link in level 2</a></li>
+                        </ul>
+                    </li>
+                </ul>
+                <!-- /.sidebar-menu -->
+            </section>
+            <!-- /.sidebar -->
+        </aside>
+    {% endblock %}
+
+    <div class="content-wrapper">
+        {% for message in messages %}
+            <div class="row">
+                <div class="col-md-12 col-sm-12 col-xs-12">
+                    <div align="center"
+                         class="alert alert-{{ message.tags }}">{{ message }}</div>
+                </div>
+            </div>
+        {% endfor %}
+        {% block content_wrapper %}<!-- Content Wrapper. Contains page content -->
+
+            <!-- Content Header (Page header) -->
+            <section class="content-header">
+                <h1>
+                    Page Header
+                    <small>Optional description</small>
+                </h1>
+                <ol class="breadcrumb">
+                    <li><a href="#"><i class="fa fa-dashboard"></i> Level</a></li>
+                    <li class="active">Here</li>
+                </ol>
+            </section>
+
+            <!-- Main content -->
+            <section class="content">
+                Fill with this your content
+                <!-- Your Page Content Here -->
+
+            </section>
+            <!-- /.content -->
+
+            <!-- /.content-wrapper -->{% endblock %}
+        <script>
+            $(document).ready(function () {
+                $('#myTable').DataTable(
+                    {
+                        select: {
+                            style: 'multi'
+                        },
+                        dom: 'Bfrtip',
+                        responsive: true,
+                        buttons: [
+                            {
+                                extend: 'copy',
+                                'className': 'btn btn-primary btn1',
+                                {% if columns %}
+                                    exportOptions: {
+                                        columns: {{ columns }},
+                                    },
+                                {% endif %}
+                                {% if messageBottom %}
+                                    messageBottom: "{{ messageBottom }}",
+                                {% endif %}
+                            },
+                            {
+                                extend: 'csv',
+                                'className': 'btn btn-primary btn1',
+                                {% if title %}
+                                    title:
+                                        "{{ title }}",
+                                {% endif %}
+                                {% if columns %}
+                                    exportOptions: {
+                                        columns: {{ columns }},
+                                    },
+                                {% endif %}
+                                {% if messageBottom %}
+                                    messageBottom: "{{ messageBottom }}",
+                                {% endif %}
+                            }
+                            ,
+                            {
+                                extend: 'pdfHtml5',
+                                orientation:
+                                    'landscape',
+                                pageSize:
+                                    'A4',
+                                className:
+                                    'btn btn-primary btn1',
+                                {% if messageBottom %}
+                                    messageBottom: "{{ messageBottom }}",
+                                {% endif %}
+                                {% if title %}
+                                    title:
+                                        "{{ title }}",
+                                {% endif %}
+                                {% if columns %}
+                                    exportOptions: {
+                                        columns: {{ columns }},
+                                    },
+                                {% endif %}
+
+                                customize: function (doc) {
+                                    doc.content.splice(1, 0, {
+                                        margin: [0, 0, 0, 12],
+                                        alignment: 'center',
+                                        image: 'data:image/png;base64,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'
+                                    });
+                                }
+                            }
+                            ,
+                            {
+                                extend: 'print',
+                                'className':
+                                    'btn btn-primary btn1',
+                                {% if messageBottom %}
+                                    messageBottom: "{{ messageBottom }}",
+                                {% endif %}
+                                {% if title %}
+                                    title:
+                                        "{{ title }}",
+                                {% endif %}
+                                {% if columns %}
+                                    exportOptions: {
+                                        columns: {{ columns }},
+                                    }
+                                {% endif %}
+                            }
+                            ,
+                            {
+                                extend: 'excel',
+                                'className':
+                                    'btn btn-primary btn1',
+                                {% if title %}
+                                    title:
+                                        "{{ title }}",
+                                {% endif %}
+                                {% if messageBottom %}
+                                    messageBottom: "{{ messageBottom }}",
+                                {% endif %}
+                                {% if columns %}
+                                    exportOptions: {
+                                        columns: {{ columns }},
+                                    }
+                                {% endif %}
+                            }
+
+                        ]
+                    }
+                )
+                ;
+            });
+        </script>
+    </div>
+    <!-- Main Footer -->
+    <footer class="main-footer">
+        <!-- To the right -->
+
+        <!-- Default to the left -->
+        <strong>Copyright &copy; 2018 <a href="#">Srinath</a>.</strong> All rights reserved.
+    </footer>
+
+    {##}
+    {#    <!-- Control Sidebar -->#}
+    {#    <aside class="control-sidebar control-sidebar-dark">#}
+    {#        <!-- Create the tabs -->#}
+    {#        <ul class="nav nav-tabs nav-justified control-sidebar-tabs">#}
+    {#            <li class="active"><a href="#control-sidebar-home-tab" data-toggle="tab"><i class="fa fa-home"></i></a></li>#}
+    {#            <li><a href="#control-sidebar-settings-tab" data-toggle="tab"><i class="fa fa-gears"></i></a></li>#}
+    {#        </ul>#}
+    {#        <!-- Tab panes -->#}
+    {#        <div class="tab-content">#}
+    {#            <!-- Home tab content -->#}
+    {#            <div class="tab-pane active" id="control-sidebar-home-tab">#}
+    {#                <h3 class="control-sidebar-heading">Recent Activity</h3>#}
+    {#                <ul class="control-sidebar-menu">#}
+    {#                    <li>#}
+    {#                        <a href="javascript:;">#}
+    {#                            <i class="menu-icon fa fa-birthday-cake bg-red"></i>#}
+    {##}
+    {#                            <div class="menu-info">#}
+    {#                                <h4 class="control-sidebar-subheading">Langdon's Birthday</h4>#}
+    {##}
+    {#                                <p>Will be 23 on April 24th</p>#}
+    {#                            </div>#}
+    {#                        </a>#}
+    {#                    </li>#}
+    {#                </ul>#}
+    {#                <!-- /.control-sidebar-menu -->#}
+    {##}
+    {#                <h3 class="control-sidebar-heading">Tasks Progress</h3>#}
+    {#                <ul class="control-sidebar-menu">#}
+    {#                    <li>#}
+    {#                        <a href="javascript:;">#}
+    {#                            <h4 class="control-sidebar-subheading">#}
+    {#                                Custom Template Design#}
+    {#                                <span class="pull-right-container">#}
+    {#                  <span class="label label-danger pull-right">70%</span>#}
+    {#                </span>#}
+    {#                            </h4>#}
+    {##}
+    {#                            <div class="progress progress-xxs">#}
+    {#                                <div class="progress-bar progress-bar-danger" style="width: 70%"></div>#}
+    {#                            </div>#}
+    {#                        </a>#}
+    {#                    </li>#}
+    {#                </ul>#}
+    {#                <!-- /.control-sidebar-menu -->#}
+    {##}
+    {#            </div>#}
+    {#            <!-- /.tab-pane -->#}
+    {#            <!-- Stats tab content -->#}
+    {#            <div class="tab-pane" id="control-sidebar-stats-tab">Stats Tab Content</div>#}
+    {#            <!-- /.tab-pane -->#}
+    {#            <!-- Settings tab content -->#}
+    {#            <div class="tab-pane" id="control-sidebar-settings-tab">#}
+    {#                <form method="post">#}
+    {#                    <h3 class="control-sidebar-heading">General Settings</h3>#}
+    {##}
+    {#                    <div class="form-group">#}
+    {#                        <label class="control-sidebar-subheading">#}
+    {#                            Report panel usage#}
+    {#                            <input type="checkbox" class="pull-right" checked>#}
+    {#                        </label>#}
+    {##}
+    {#                        <p>#}
+    {#                            Some information about this general settings option#}
+    {#                        </p>#}
+    {#                    </div>#}
+    {#                    <!-- /.form-group -->#}
+    {#                </form>#}
+    {#            </div>#}
+    {#            <!-- /.tab-pane -->#}
+    {#        </div>#}
+    {#    </aside>#}
+    {#    <!-- /.control-sidebar -->#}
+    {#    <!-- Add the sidebar's background. This div must be placed#}
+    {#         immediately after the control sidebar -->#}
+    {#    <div class="control-sidebar-bg"></div>#}
+    {#</div>#}
+    <!-- ./wrapper -->
+
+    <!-- REQUIRED JS SCRIPTS -->
+
+    <link href="https://cdn.datatables.net/1.10.16/css/jquery.dataTables.min.css">
+    <!-- jQuery 2.2.3 -->
+    <script src="{% static 'admin_theme/plugins/jQuery/jquery-2.2.3.min.js' %}"></script>
+    <!-- Bootstrap 3.3.6 -->
+    <script src="{% static 'admin_theme/bootstrap/js/bootstrap.min.js' %}"></script>
+    <!-- AdminLTE App -->
+    <script src="{% static 'admin_theme/dist/js/app.min.js' %}"></script>
+    <script src="{% static 'admin_theme/plugins/slimScroll/jquery.slimscroll.min.js' %}"></script>
+    <!-- FastClick -->
+    <script src="{% static 'admin_theme/plugins/fastclick/fastclick.js' %}"></script>
+
+    <script src="{% static 'admin_theme/plugins/jquery-datatable/jquery.dataTables.js' %}"></script>
+    <script src="{% static 'admin_theme/plugins/jquery-datatable/skin/bootstrap/js/dataTables.bootstrap.js' %}"></script>
+    <script src="{% static 'admin_theme/plugins/jquery-datatable/extensions/export/dataTables.buttons.min.js' %}"></script>
+    <script src="{% static 'admin_theme/plugins/jquery-datatable/extensions/export/buttons.flash.min.js' %}"></script>
+    <script src="{% static 'admin_theme/plugins/jquery-datatable/extensions/export/jszip.min.js' %}"></script>
+    <script src="{% static 'admin_theme/plugins/jquery-datatable/extensions/export/pdfmake.min.js' %}"></script>
+    <script src="{% static 'admin_theme/plugins/jquery-datatable/extensions/export/vfs_fonts.js' %}"></script>
+    <script src="{% static 'admin_theme/plugins/jquery-datatable/extensions/export/buttons.html5.min.js' %}"></script>
+    <script src="{% static 'admin_theme/plugins/jquery-datatable/extensions/export/buttons.print.min.js' %}"></script>
+    {% block jscript %}
+
+    {% endblock %}
+</div>
+</body>
+</html>

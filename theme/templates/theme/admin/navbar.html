@@ -1,0 +1,19 @@
+<!-- Sidebar Menu -->
+<ul class="sidebar-menu">
+    <li class="header">Main Navigation</li>
+    <!-- Optionally, you can add icons to the links -->
+    <li class="active"><a href="#"><i class="fa fa-link"></i> <span>Link</span></a></li>
+    <li class="treeview">
+        <a href="#"><i class="fa fa-user"></i> <span>User Management</span>
+            <span class="pull-right-container">
+                            <i class="fa fa-angle-left pull-right"></i>
+                        </span>
+        </a>
+        <ul class="treeview-menu">
+            <li><a href="#">Create Student</a></li>
+            <li><a href="{% url 'create_vendor' %}">Create Vendor</a></li>
+            <li><a href="#">Create Staff</a></li>
+        </ul>
+    </li>
+</ul>
+<!-- /.sidebar-menu -->

@@ -1,0 +1,29 @@
+
+
+<!-- Sidebar Menu -->
+<ul class="sidebar-menu">
+    <li class="header">Main Navigation</li>
+
+{% for menu_item in menu %}
+
+    {% if  menu_item.childs|length != 0 %}
+            <li class="treeview">
+        <a href="#"><i class="fa fa-user"></i> <span>{{ menu_item.name }}</span>
+            <span class="pull-right-container">
+                            <i class="fa fa-angle-left pull-right"></i>
+                        </span>
+        </a>
+        <ul class="treeview-menu">
+            {% for child_item in menu_item.childs %}
+            <li><a href="{{ child_item.url }}">{{ child_item.name }}</a></li>
+            {% endfor %}
+        </ul>
+    </li>
+
+    {% endif %}
+
+{% endfor %}
+
+
+</ul>
+<!-- /.sidebar-menu -->
