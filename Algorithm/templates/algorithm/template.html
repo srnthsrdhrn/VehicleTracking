@@ -1,4 +1,7 @@
 {% extends 'theme/admin/base.html' %}
+{% block body %}
+    <body class="hold-transition skin-blue fixed" onload="init()">
+{% endblock %}
 {% load staticfiles %}
 {% load crispy_forms_tags %}
 {% block headscript %}
@@ -7,7 +10,7 @@
         canvas = document.getElementById('can');
         ctx = canvas.getContext("2d");
         base_image = new Image();
-        base_image.src = 'http://127.0.0.1:8000/{{ image_url }}';
+        base_image.src = '{{ image_url }}';
         base_image.onload = function () {
             ctx.drawImage(base_image, 0, 0, 900, 600);
         };

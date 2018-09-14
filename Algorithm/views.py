@@ -83,7 +83,7 @@ def draw_canvas(request, pk):
             ret, frame = cap.read()
             path = "media/tmp/{}.jpg".format("test")
             cv2.imwrite(path, frame)
-
+    path = "http://"+request.get_host()+"/"+path
     line_coordinates = None
     if video.line_coord_init_x:
         line_coordinates = [video.line_coord_init_x, video.line_coord_init_y, video.line_coord_end_x,
