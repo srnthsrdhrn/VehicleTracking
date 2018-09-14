@@ -13,6 +13,11 @@ class Videos(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
 
+class VideoLog(models.Model):
+    video = models.ForeignKey('Videos', related_name='Logs', on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    data = models.CharField(max_length=500)
+
 # class VehicleCount(models.Model):
 #     CAR = 0
 #     BUS = 1

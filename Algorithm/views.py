@@ -1,3 +1,4 @@
+import json
 import time
 from threading import Thread
 
@@ -5,13 +6,13 @@ import cv2
 from django.contrib import messages
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
-
 # Create your views here.
 from django.urls import reverse
-from django.views.generic import ListView, UpdateView, DeleteView
+from django.views.generic import ListView, DeleteView
+from pytz import timezone
 
 from Algorithm.forms import VideoProcessForm
-from Algorithm.models import Videos
+from Algorithm.models import Videos, VideoLog
 
 
 def landing_page(request):
@@ -126,18 +127,47 @@ class VideoList(ListView):
     template_name = 'algorithm/list_Video.html'
 
 
-# class DepartmentUpdate(UpdateView):
-#     model = Videos
-#     fields = ['username', 'first_name', 'last_name', 'email', 'institution', 'academic', 'code', 'rfidvalue']
-#     template_name = 'algorithm/update.html'
-#
-#     def get_success_url(self):
-#         return reverse('list_department')
-
-
 class DeleteVideo(DeleteView):
     model = Videos
     template_name = 'algorithm/delete.html'
 
     def get_success_url(self):
         return reverse('list_video')
+
+
+def VideoLogAPI(request):
+    video_id = request.GET.get("video_id")
+    logs = VideoLog.objects.filter(video_id=video_id).order_by('-created_at')
+    if logs.exists():
+        logs = logs[:10]
+    car_inflow = []
+    car_outflow = []
+    bike_inflow = []
+    bike_outflow = []
+    truck_inflow = []
+    truck_outflow = []
+    time = []
+    for log in logs:
+        temp = json.loads(log.data)
+        car_inflow.append(temp[0])
+        car_outflow.append(temp[4])
+        bike_inflow.append(temp[1])
+        bike_outflow.append(temp[5])
+        truck_inflow.append(temp[2])
+        truck_outflow.append(temp[6])
+        asia = timezone("Asia/Kolkata")
+        time.append(log.created_at.astimezone(asia).strftime("%D %H:%M:%S"))
+    car_inflow.reverse()
+    car_outflow.reverse()
+    bike_inflow.reverse()
+    bike_outflow.reverse()
+    truck_inflow.reverse()
+    truck_outflow.reverse()
+    time.reverse()
+    data = [car_inflow, car_outflow, bike_inflow, bike_outflow,
+            truck_inflow, truck_outflow]
+    return HttpResponse(json.dumps({"y": data, "x": time}))
+
+
+def VideoOutput(request, pk):
+    return render(request, 'algorithm/output_graph.html', {'video_id': pk})

@@ -22,10 +22,6 @@ def show_admin_menu(user):
                     "name": "Video list",
                     'url': reverse("list_video"),
                 },
-                # {
-                #     "name": "Home",
-                #     'url': reverse("productshome"),
-                # }
             ]
         },
 

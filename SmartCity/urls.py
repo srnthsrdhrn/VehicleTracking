@@ -16,7 +16,7 @@ Including another URLconf
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
-from Algorithm.views import draw_canvas, get_video_input, start_processing, stop_processes, landing_page
+from Algorithm.views import draw_canvas, get_video_input, start_processing, stop_processes, landing_page, VideoLogAPI
 from SmartCity import settings
 
 urlpatterns = [
@@ -26,6 +26,7 @@ urlpatterns = [
     path('stop_process/(?P<pk>\d+)/', stop_processes, name="stop_process"),
     path('start_processing/(?P<pk>\d+)/', start_processing, name='start_processing'),
     path('', landing_page, name='landing_page'),
-    path('algorithm/',include('Algorithm.urls')),
+    path('algorithm/', include('Algorithm.urls')),
+    path('api/v1/VideoLogData', VideoLogAPI, name='video_log_api')
 ]
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
