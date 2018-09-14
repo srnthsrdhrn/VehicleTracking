@@ -13,7 +13,7 @@ def manual_seeting():
     # FLAGS.metaLoad = "tiny-yolo-voc-traffic.meta" # tensorflow weights
     FLAGS.threshold = 0.3  # threshold of decesion confidance (detection if confidance > threshold )
     FLAGS.max_gpu_usage = 0.90
-    FLAGS.number_of_parallel_threads = 2
+    FLAGS.number_of_parallel_threads = 3
     FLAGS.gpu = FLAGS.max_gpu_usage / FLAGS.number_of_parallel_threads  # how much of the GPU to use (between 0 and 1) 0 means use cpu
     FLAGS.track = True  # wheither to activate tracking or not
     FLAGS.trackObj = ['car', 'bus',

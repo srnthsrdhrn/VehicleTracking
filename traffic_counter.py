@@ -153,11 +153,11 @@ class DeepSenseTrafficManagement:
             time.sleep(10)
             if video.processed or self.exit_threads:
                 self.exit_threads = True
-                while True:
-                    try:
-                        inputQueue.get(timeout=5)
-                    except Exception:
-                        break
+                # while True:
+                #     try:
+                #         inputQueue.get(timeout=5)
+                #     except Exception:
+                #         break
                 while True:
                     try:
                         resultQueue.get(timeout=5)
@@ -181,7 +181,7 @@ class DeepSenseTrafficManagement:
         global inputQueue, buffer_queue
         self.counter = 0
         # frame_flag = True
-        wait_time = 0.1
+        wait_time = 0.05
         # buffer_velocity = []
         # prev_buffer_length = 0
         while True:
@@ -339,8 +339,8 @@ class DeepSenseTrafficManagement:
         except Exception:
             print("Result Queue Empty and Timed out after 30 seconds")
             return None
-        # print("Result Queue size {}".format(resultQueue.qsize()))
-        # print("Buffer Queue size {}".format(buffer_queue.qsize()))
+        print("Result Queue size {}".format(resultQueue.qsize()))
+        print("Buffer Queue size {}".format(buffer_queue.qsize()))
         tracker = self.Tracker
         h, w, _ = imgcv.shape
         thick = int((h + w) // 300)
