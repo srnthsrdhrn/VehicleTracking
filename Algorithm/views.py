@@ -139,6 +139,8 @@ def VideoLogAPI(request):
     video_id = request.GET.get("video_id")
     logs = VideoLog.objects.filter(video_id=video_id).order_by('-created_at')
     is_moving_avg = request.GET.get("is_moving_avg")
+    if is_moving_avg and int(is_moving_avg) == 1:
+        logs = logs.filter(moving_avg__isnull=False)
     if logs.exists():
         logs = logs[:10]
     car_inflow = []
@@ -149,7 +151,7 @@ def VideoLogAPI(request):
     truck_outflow = []
     time = []
     for log in logs:
-        if is_moving_avg:
+        if is_moving_avg and int(is_moving_avg) == 1:
             temp = json.loads(log.moving_avg)
         else:
             temp = json.loads(log.data)
@@ -175,4 +177,4 @@ def VideoLogAPI(request):
 
 def VideoOutput(request, pk, is_move_avg):
     return render(request, 'algorithm/output_graph.html',
-                  {'video_id': pk, 'is_moving_avg': True if is_move_avg==1 else False})
+                  {'video_id': pk, 'is_moving_avg': True if int(is_move_avg) == 1 else False})
