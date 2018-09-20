@@ -83,7 +83,7 @@ def draw_canvas(request, pk):
             ret, frame = cap.read()
             path = "media/tmp/{}.jpg".format("test")
             cv2.imwrite(path, frame)
-    path = "http://"+request.get_host()+"/"+path
+    path = "http://" + request.get_host() + "/" + path
     line_coordinates = None
     if video.line_coord_init_x:
         line_coordinates = [video.line_coord_init_x, video.line_coord_init_y, video.line_coord_end_x,
@@ -138,6 +138,7 @@ class DeleteVideo(DeleteView):
 def VideoLogAPI(request):
     video_id = request.GET.get("video_id")
     logs = VideoLog.objects.filter(video_id=video_id).order_by('-created_at')
+    is_moving_avg = request.GET.get("is_moving_avg")
     if logs.exists():
         logs = logs[:10]
     car_inflow = []
@@ -148,7 +149,10 @@ def VideoLogAPI(request):
     truck_outflow = []
     time = []
     for log in logs:
-        temp = json.loads(log.data)
+        if is_moving_avg:
+            temp = json.loads(log.moving_avg)
+        else:
+            temp = json.loads(log.data)
         car_inflow.append(temp[0])
         car_outflow.append(temp[4])
         bike_inflow.append(temp[1])
@@ -169,5 +173,6 @@ def VideoLogAPI(request):
     return HttpResponse(json.dumps({"y": data, "x": time}))
 
 
-def VideoOutput(request, pk):
-    return render(request, 'algorithm/output_graph.html', {'video_id': pk})
+def VideoOutput(request, pk, is_move_avg):
+    return render(request, 'algorithm/output_graph.html',
+                  {'video_id': pk, 'is_moving_avg': True if is_move_avg==1 else False})

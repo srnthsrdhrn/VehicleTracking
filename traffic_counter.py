@@ -17,7 +17,7 @@ date = datetime.now().strftime("%d_%m_%Y_%H_%M_%S")
 inputQueue = SQLiteQueue(path="queue_db/", name="table_" + date, multithreading=True)
 resultQueue = PriorityQueue()
 buffer_queue = Queue()
-    # Deque(directory="media/dequeue_tmp/")
+# Deque(directory="media/dequeue_tmp/")
 csv_file = open("media/output_file/Video_{}.csv".format(datetime.now().strftime("%d_%m_%Y_%H_%M_%S")), 'w')
 csv_writer = csv.writer(csv_file)
 
@@ -73,6 +73,7 @@ class DeepSenseTrafficManagement:
         self.Tracker, self.encoder = self.input_track()
         self.source = self.input_source(file, path)
         self.Tracker.line_coordinate = line_coordinates
+        self.moving_avg = []
         # [start_x, start_y, end_x, end_y]
 
         """
@@ -401,6 +402,19 @@ class DeepSenseTrafficManagement:
                 break
             self.elapsed += 1
             vehicle_count = self.Tracker.vehicle_count
+            if self.elapsed / self.frame_rate % 1 == 0:
+                if self.moving_avg.__len__() >= 10:
+                    self.moving_avg.pop(0)
+                    self.moving_avg.append(vehicle_count)
+                    vehicle_avg = []
+                    for i in range(0, vehicle_count.__len__()):
+                        mSum = 0
+                        for data in self.moving_avg:
+                            mSum += data[i]
+                        vehicle_avg[i] = round(mSum / self.moving_avg.__len__(), 2)
+                    VideoLog.objects.create(video=self.video_obj, moving_avg=str(vehicle_avg))
+                else:
+                    self.moving_avg.append(vehicle_count)
             if self.elapsed / self.frame_rate % 5 == 0:
                 csv_writer.writerow(vehicle_count)
                 csv_file.flush()

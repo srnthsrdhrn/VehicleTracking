@@ -16,7 +16,8 @@ class Videos(models.Model):
 class VideoLog(models.Model):
     video = models.ForeignKey('Videos', related_name='Logs', on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
-    data = models.CharField(max_length=500)
+    moving_avg = models.FloatField(null=True, blank=True)
+    data = models.CharField(max_length=500,null=True,blank=True)
 
 # class VehicleCount(models.Model):
 #     CAR = 0

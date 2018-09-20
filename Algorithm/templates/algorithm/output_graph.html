@@ -8,7 +8,7 @@
 
         Chart.defaults.global.defaultFontFamily = "Lato";
         Chart.defaults.global.defaultFontSize = 18;
-         var chartOptions = {
+        var chartOptions = {
             legend: {
                 display: true,
                 position: 'top',
@@ -24,105 +24,106 @@
             options: chartOptions
         });
         setInterval(function () {
-            $.get("{% url 'video_log_api' %}?video_id={{ video_id }}", function (data, status) {
+            var url = "{% url 'video_log_api' %}?video_id={{ video_id }}{% if is_moving_avg %}&is_moving_avg=1{% endif %}";
+            $.get(url, function (data, status) {
                 var data = JSON.parse(data);
                 console.log(data.x);
                 lineChart.data = {
-            labels: data.x,
-            datasets: [
-                {
-                    label: "Car Inflow ",
-                    data: data.y[0],
-                    lineTension: 0.3,
-                    fill: false,
-                    borderColor: 'red',
-                    backgroundColor: 'transparent',
-                    pointBorderColor: 'red',
-                    pointBackgroundColor: 'red',
-                    pointRadius: 5,
-                    pointHoverRadius: 15,
-                    pointHitRadius: 20,
-                    pointBorderWidth: 2,
-                    pointStyle: 'circle'
-                },
-                {
-                    label: "Car OutFlow ",
-                    data: data.y[1],
-                    lineTension: 0.3,
-                    fill: false,
-                    borderColor: 'blue',
-                    backgroundColor: 'transparent',
-                    pointBorderColor: 'blue',
-                    pointBackgroundColor: 'blue',
-                    pointRadius: 5,
-                    pointHoverRadius: 15,
-                    pointHitRadius: 20,
-                    pointBorderWidth: 2,
-                    pointStyle: 'circle'
-                },
-                {
-                    label: "Two Wheeler Inflow",
-                    data: data.y[2],
-                    lineTension: 0.3,
-                    fill: false,
-                    borderColor: 'green',
-                    backgroundColor: 'transparent',
-                    pointBorderColor: 'green',
-                    pointBackgroundColor: 'green',
-                    pointRadius: 5,
-                    pointHoverRadius: 15,
-                    pointHitRadius: 20,
-                    pointBorderWidth: 2,
-                    pointStyle: 'cricle'
-                },
-                {
-                    label: "Two Wheeler OutFlow",
-                    data: data.y[3],
-                    lineTension: 0.3,
-                    fill: false,
-                    borderColor: 'orange',
-                    backgroundColor: 'transparent',
-                    pointBorderColor: 'orange',
-                    pointBackgroundColor: 'orange',
-                    pointRadius: 5,
-                    pointHoverRadius: 15,
-                    pointHitRadius: 20,
-                    pointBorderWidth: 2,
-                    pointStyle: 'circle'
-                },
-                {
-                    label: "Truck Inflow ",
-                    data: data.y[4],
-                    lineTension: 0.3,
-                    fill: false,
-                    borderColor: 'brown',
-                    backgroundColor: 'transparent',
-                    pointBorderColor: 'brown',
-                    pointBackgroundColor: 'brown',
-                    pointRadius: 5,
-                    pointHoverRadius: 15,
-                    pointHitRadius: 20,
-                    pointBorderWidth: 2,
-                    pointStyle: 'circle'
-                },
-                {
-                    label: "Truck OutFlow",
-                    data: data.y[5],
-                    lineTension: 0.3,
-                    fill: false,
-                    borderColor: 'black',
-                    backgroundColor: 'transparent',
-                    pointBorderColor: 'black',
-                    pointBackgroundColor: 'black',
-                    pointRadius: 5,
-                    pointHoverRadius: 15,
-                    pointHitRadius: 20,
-                    pointBorderWidth: 2,
-                    pointStyle: 'circle'
-                },
-            ]
-        };
-        lineChart.update();
+                    labels: data.x,
+                    datasets: [
+                        {
+                            label: "Car Inflow ",
+                            data: data.y[0],
+                            lineTension: 0.3,
+                            fill: false,
+                            borderColor: 'red',
+                            backgroundColor: 'transparent',
+                            pointBorderColor: 'red',
+                            pointBackgroundColor: 'red',
+                            pointRadius: 5,
+                            pointHoverRadius: 15,
+                            pointHitRadius: 20,
+                            pointBorderWidth: 2,
+                            pointStyle: 'circle'
+                        },
+                        {
+                            label: "Car OutFlow ",
+                            data: data.y[1],
+                            lineTension: 0.3,
+                            fill: false,
+                            borderColor: 'blue',
+                            backgroundColor: 'transparent',
+                            pointBorderColor: 'blue',
+                            pointBackgroundColor: 'blue',
+                            pointRadius: 5,
+                            pointHoverRadius: 15,
+                            pointHitRadius: 20,
+                            pointBorderWidth: 2,
+                            pointStyle: 'circle'
+                        },
+                        {
+                            label: "Two Wheeler Inflow",
+                            data: data.y[2],
+                            lineTension: 0.3,
+                            fill: false,
+                            borderColor: 'green',
+                            backgroundColor: 'transparent',
+                            pointBorderColor: 'green',
+                            pointBackgroundColor: 'green',
+                            pointRadius: 5,
+                            pointHoverRadius: 15,
+                            pointHitRadius: 20,
+                            pointBorderWidth: 2,
+                            pointStyle: 'cricle'
+                        },
+                        {
+                            label: "Two Wheeler OutFlow",
+                            data: data.y[3],
+                            lineTension: 0.3,
+                            fill: false,
+                            borderColor: 'orange',
+                            backgroundColor: 'transparent',
+                            pointBorderColor: 'orange',
+                            pointBackgroundColor: 'orange',
+                            pointRadius: 5,
+                            pointHoverRadius: 15,
+                            pointHitRadius: 20,
+                            pointBorderWidth: 2,
+                            pointStyle: 'circle'
+                        },
+                        {
+                            label: "Truck Inflow ",
+                            data: data.y[4],
+                            lineTension: 0.3,
+                            fill: false,
+                            borderColor: 'brown',
+                            backgroundColor: 'transparent',
+                            pointBorderColor: 'brown',
+                            pointBackgroundColor: 'brown',
+                            pointRadius: 5,
+                            pointHoverRadius: 15,
+                            pointHitRadius: 20,
+                            pointBorderWidth: 2,
+                            pointStyle: 'circle'
+                        },
+                        {
+                            label: "Truck OutFlow",
+                            data: data.y[5],
+                            lineTension: 0.3,
+                            fill: false,
+                            borderColor: 'black',
+                            backgroundColor: 'transparent',
+                            pointBorderColor: 'black',
+                            pointBackgroundColor: 'black',
+                            pointRadius: 5,
+                            pointHoverRadius: 15,
+                            pointHitRadius: 20,
+                            pointBorderWidth: 2,
+                            pointStyle: 'circle'
+                        },
+                    ]
+                };
+                lineChart.update();
 
             });
         }, 5000);
