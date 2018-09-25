@@ -2,7 +2,7 @@ from darkflow.darkflow.defaults import argHandler  # Import the default argument
 from darkflow.darkflow.net.build import TFNet
 
 
-def manual_seeting():
+def manual_setting():
     FLAGS = argHandler()
     FLAGS.setDefaults()
 

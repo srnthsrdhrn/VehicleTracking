@@ -8,15 +8,13 @@ import cv2
 import numpy as np
 from persistqueue import SQLiteQueue
 from Algorithm.models import Videos, VideoLog
+from SmartCity import buffer_queue, resultQueue
 from utils import run
 from utils.ArgumentsHandler import argHandler
 from diskcache import Deque
 import tensorflow as tf
 
 date = datetime.now().strftime("%d_%m_%Y_%H_%M_%S")
-inputQueue = SQLiteQueue(path="queue_db/", name="table_" + date, multithreading=True)
-resultQueue = PriorityQueue()
-buffer_queue = Queue()
 # Deque(directory="media/dequeue_tmp/")
 csv_file = open("media/output_file/Video_{}.csv".format(datetime.now().strftime("%d_%m_%Y_%H_%M_%S")), 'w')
 csv_writer = csv.writer(csv_file)
@@ -60,7 +58,7 @@ class DeepSenseTrafficManagement:
         """
         Capturing arguments from command line
         """
-        FLAGS = run.manual_seeting()
+        FLAGS = run.manual_setting()
         self.FLAG = argHandler()
         self.FLAG.setDefaults()
         self.FLAG.update(FLAGS)
@@ -74,13 +72,14 @@ class DeepSenseTrafficManagement:
         self.source = self.input_source(file, path)
         self.Tracker.line_coordinate = line_coordinates
         self.moving_avg = []
+        self.prev_vehicle_count = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         # [start_x, start_y, end_x, end_y]
 
         """
         This one line initializes the Neural Network for predictions
         """
         self.exit_threads = False
-        self.init_workers()
+        # self.init_workers()
         self.start_buffer_feeder()
         # self.start_feeder()
         self.start_collection()
@@ -179,7 +178,6 @@ class DeepSenseTrafficManagement:
         t.start()
 
     def buffer_feeder(self):
-        global inputQueue, buffer_queue
         self.counter = 0
         # frame_flag = True
         wait_time = 0.05
@@ -196,7 +194,7 @@ class DeepSenseTrafficManagement:
             #     elif sum(buffer_velocity) < 0 and wait_time > 0.1:
             #         wait_time -= 0.1 * buf_vel
             #     buffer_velocity.pop()
-            # current_buffer_len = buffer_queue.__len__()
+            # current_buffer_len = buffer_queue.qsize()
             # diff = current_buffer_len - prev_buffer_length
             # prev_buffer_length = current_buffer_len
             # if diff <= 0:
@@ -211,127 +209,21 @@ class DeepSenseTrafficManagement:
             # else:
             #     frame_flag = True
             self.counter += 1
-            if frame is None:
-                # Video fully queued. Wait for workers to finish and exit
-                print("Frame None Exiting Buffer Feeder")
-                break
-            # time.sleep(0.5)
-            buffer_queue.put((self.counter, frame))
+            if frame is not None:
+                buffer_queue.put((self.counter, frame))
             time.sleep(wait_time)
-
-    def start_feeder(self):
-        """
-        Utility Method that gets called once the gpu processing is requested.
-        It starts worker Processes to process images in parallel, and puts it into a queue. The video is to be taken and played from the queue
-        :return: None
-        """
-        global inputQueue
-        global resultQueue
-        self.feeder_thread = Thread(target=self.feeder)
-        self.feeder_thread.daemon = True
-        self.feeder_thread.start()
-
-    def feeder(self):
-        """
-        Feeder Thread Function. This thread feeds the frames from the input source into the input queue. This has been
-        put as a separate thread in order to prevent it from blocking the UI thread.
-
-        ***Warning***
-        Do not remove the time.sleep(), since it will start feeding continuously into the input queue, it will overflow
-        the ram easily and the system will hang up.
-
-        If the RAM usage keeps increasing at a constant rate, increase the sleeping time.
-        :return: None
-        """
-        global inputQueue, buffer_queue
-        while True:
-            if self.exit_threads:
-                print("Exiting Feeder")
-                break
-            try:
-                counter, frame = buffer_queue.popleft()
-                # time.sleep(0.5)
-                inputQueue.put((counter, frame))
-            except IndexError:
-                print("Buffer Queue Empty, Waiting...")
-                time.sleep(5)
-            except Exception as e:
-                print("Buffer Empty Exiting Feeder")
-                break
-
-    def init_workers(self):
-        global inputQueue
-        global resultQueue
-        for id in range(0, self.options.number_of_parallel_threads):
-            try:
-                t = Thread(target=self.worker_process, args=(id + 1, inputQueue, resultQueue))
-                t.daemon = True
-                t.start()
-
-            except Exception as e:
-                pass
-
-    def worker_process(self, worker_id, inputQueue, resultQueue):
-        """
-        Worker Process function that takes in the input and output queue, reads from the input queue,
-        performs detections and puts the output in the result queue
-        :param worker_id: The Id number of the worker
-        :param inputQueue: Input Queue which contains the frame id and the frame matrix
-        :param resultQueue: Result Queue which contains the image and bounding boxes
-        :return: None
-        # """
-        tfnet = run.Initialize(self.options)
-        print("Worker {} Ready".format(worker_id))
-        flag = True
-        while True:
-            if self.exit_threads:
-                print("Exiting Worker {}".format(worker_id))
-                break
-            try:
-                # if flag:
-                # counter, frame = inputQueue.get(timeout=300)
-                counter, frame = buffer_queue.get()
-                # flag = False
-                # else:
-                #     counter, frame = inputQueue.get(timeout=60)
-                # resultQueue.put((counter, frame))
-                # with tf.device("/cpu:0"):
-
-                preprocessed = tfnet.framework.preprocess(frame)
-
-                buffer_inp = list()
-                buffer_pre = list()
-                buffer_inp.append(frame)
-                buffer_pre.append(preprocessed)
-
-                feed_dict = {tfnet.inp: buffer_pre}
-
-                net_out = tfnet.sess.run(tfnet.out, feed_dict)
-
-                # with tf.device("/cpu:0"):
-                for img, single_out in zip(buffer_inp, net_out):
-                    tfnet.framework.postprocess(single_out, img, resultQueue, counter=counter)
-
-            except Exception as e:
-                if self.exit_threads:
-                    print("Exiting Worker {}".format(worker_id))
-                    break
-                else:
-                    print("Worker Waiting, Buffer Fully Processed")
-                    time.sleep(2)
 
     def kalman_process(self):
         """
         Utility method to read from result queue in order and perform Kalman Filter Prediction
         :return: Process Image
         """
-        global resultQueue, inputQueue, buffer_queue
 
         # counter, frame = resultQueue.get()
         # return frame
         try:
             # while True:
-            counter, detections, boxes_final, imgcv = resultQueue.get(timeout=300)
+            counter, detections, boxes_final, imgcv = resultQueue.get()
             # if self.check_counter + 1 == counter:
             #     break
             # else:
@@ -340,8 +232,8 @@ class DeepSenseTrafficManagement:
         except Exception:
             print("Result Queue Empty and Timed out after 30 seconds")
             return None
-        print("Result Queue size {}".format(resultQueue.qsize()))
-        print("Buffer Queue size {}".format(buffer_queue.qsize()))
+        # print("Result Queue size {}".format(resultQueue.qsize()))
+        # print("Buffer Queue size {}".format(buffer_queue.qsize()))
         tracker = self.Tracker
         h, w, _ = imgcv.shape
         thick = int((h + w) // 300)
@@ -352,26 +244,26 @@ class DeepSenseTrafficManagement:
             return imgcv  # , tracker.vehicle_count[4], tracker.vehicle_count[5], tracker.vehicle_count[6]
         else:
             trackers = tracker.update(detections, boxes_final)
-        for track in trackers:
-            bbox = [int(track[0]), int(track[1]), int(track[2]), int(track[3])]
-            for i in range(len(boxes_final)):
-                box = boxes_final[i]
-
-                if (((box[2]) - 30) <= int(bbox[1]) <= ((box[2]) + 30) and ((box[0]) - 30) <= bbox[0] <= (
-                        (box[0]) + 30)):
-                    global v_name
-                    v_name = box[4]
-
-            if v_name == 'car':
-                cv2.rectangle(imgcv, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])),
-                              (255, 255, 255), thick // 3)
-            if v_name == 'bus':
-                cv2.rectangle(imgcv, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])),
-                              (0, 0, 255), thick // 3)
-
-            if v_name == 'motorbike':
-                cv2.rectangle(imgcv, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])),
-                              (0, 255, 0), thick // 3)
+        # for track in trackers:
+        #     bbox = [int(track[0]), int(track[1]), int(track[2]), int(track[3])]
+        #     for i in range(len(boxes_final)):
+        #         box = boxes_final[i]
+        #
+        #         if (((box[2]) - 30) <= int(bbox[1]) <= ((box[2]) + 30) and ((box[0]) - 30) <= bbox[0] <= (
+        #                 (box[0]) + 30)):
+        #             global v_name
+        #             v_name = box[4]
+        #
+        #     if v_name == 'car':
+        #         cv2.rectangle(imgcv, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])),
+        #                       (255, 255, 255), thick // 3)
+        #     if v_name == 'bus':
+        #         cv2.rectangle(imgcv, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])),
+        #                       (0, 0, 255), thick // 3)
+        #
+        #     if v_name == 'motorbike':
+        #         cv2.rectangle(imgcv, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])),
+        #                       (0, 255, 0), thick // 3)
         return imgcv
 
     def get_postprocessed(self):
@@ -402,19 +294,8 @@ class DeepSenseTrafficManagement:
                 break
             self.elapsed += 1
             vehicle_count = self.Tracker.vehicle_count
-            if self.elapsed / self.frame_rate % 1 == 0:
-                if self.moving_avg.__len__() >= 10:
-                    self.moving_avg.pop(0)
-                    self.moving_avg.append(vehicle_count)
-                    vehicle_avg = []
-                    for i in range(0, vehicle_count.__len__()):
-                        mSum = 0
-                        for data in self.moving_avg:
-                            mSum += data[i]
-                        vehicle_avg[i] = round(mSum / self.moving_avg.__len__(), 2)
-                    VideoLog.objects.create(video=self.video_obj, moving_avg=str(vehicle_avg))
-                else:
-                    self.moving_avg.append(vehicle_count)
+            if self.elapsed / self.frame_rate % 5 == 0:
+                    VideoLog.objects.create(video=self.video_obj, moving_avg=str(vehicle_count[7:]))
             if self.elapsed / self.frame_rate % 5 == 0:
                 csv_writer.writerow(vehicle_count)
                 csv_file.flush()

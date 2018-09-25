@@ -141,6 +141,8 @@ def VideoLogAPI(request):
     is_moving_avg = request.GET.get("is_moving_avg")
     if is_moving_avg and int(is_moving_avg) == 1:
         logs = logs.filter(moving_avg__isnull=False)
+    else:
+        logs = logs.filter(moving_avg__isnull=True)
     if logs.exists():
         logs = logs[:10]
     car_inflow = []
@@ -153,14 +155,20 @@ def VideoLogAPI(request):
     for log in logs:
         if is_moving_avg and int(is_moving_avg) == 1:
             temp = json.loads(log.moving_avg)
+            car_inflow.append(temp[0])
+            car_outflow.append(temp[3])
+            bike_inflow.append(temp[1])
+            bike_outflow.append(temp[4])
+            truck_inflow.append(temp[2])
+            truck_outflow.append(temp[5])
         else:
             temp = json.loads(log.data)
-        car_inflow.append(temp[0])
-        car_outflow.append(temp[4])
-        bike_inflow.append(temp[1])
-        bike_outflow.append(temp[5])
-        truck_inflow.append(temp[2])
-        truck_outflow.append(temp[6])
+            car_inflow.append(temp[0])
+            car_outflow.append(temp[4])
+            bike_inflow.append(temp[1])
+            bike_outflow.append(temp[5])
+            truck_inflow.append(temp[2])
+            truck_outflow.append(temp[6])
         asia = timezone("Asia/Kolkata")
         time.append(log.created_at.astimezone(asia).strftime("%D %H:%M:%S"))
     car_inflow.reverse()

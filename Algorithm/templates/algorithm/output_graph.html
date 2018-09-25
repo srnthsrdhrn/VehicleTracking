@@ -1,22 +1,38 @@
 {% extends 'theme/admin/base.html' %}
 {% block content_wrapper %}
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.js"></script>
-
-    <canvas id="vehicleChart" width="600" height="400"></canvas>
-    <script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.js"></script>
+<canvas id="vehicleChart"></canvas>
+<script>
         var speedCanvas = document.getElementById("vehicleChart");
 
         Chart.defaults.global.defaultFontFamily = "Lato";
         Chart.defaults.global.defaultFontSize = 18;
+        Chart.defaults.global.defaultFontStyle="bold";
         var chartOptions = {
             legend: {
-                display: true,
-                position: 'top',
-                labels: {
-                    boxWidth: 80,
-                    fontColor: 'black'
-                }
-            }
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        boxWidth: 80,
+                        fontColor: 'black'
+                    }
+                },
+                scales: {
+                        yAxes: [{
+                              scaleLabel: {
+                                display: true,
+                                labelString: 'Count',
+                                fontSize:30
+                              }
+                        }],
+                        xAxes: [{
+                              scaleLabel: {
+                                display: true,
+                                labelString: 'Time',
+                                fontSize:30
+                              }
+                        }]
+                    }
         };
 
         var lineChart = new Chart(speedCanvas, {
@@ -126,7 +142,8 @@
                 lineChart.update();
 
             });
-        }, 5000);
+        }, 5*60*1000);
 
-    </script>
+
+</script>
 {% endblock %}

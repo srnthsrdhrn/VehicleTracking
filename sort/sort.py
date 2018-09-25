@@ -236,8 +236,7 @@ class Sort(object):
         self.line_coordinate = []
         self.new_video = False
         self.frame_rate = 0
-        self.SECONDS_TO_CALCULATE_AVERAGE = 2 * 60
-        self.MOVING_AVG_WINDOW = 6 * 60
+        self.MOVING_AVG_WINDOW = 5 * 60
         self.prev_car_c_neg = 0
         self.prev_car_c_pos = 0
         self.prev_bus_c_neg = 0
@@ -409,18 +408,16 @@ class Sort(object):
         c_neg = Count Negative | in flow
         c_pos = Count Positive | out flow
         """
-        avg_frame_count = self.SECONDS_TO_CALCULATE_AVERAGE * self.frame_rate
-        if self.frame_count % avg_frame_count == 0 and self.frame_count >= avg_frame_count:
+        if self.frame_count % (self.MOVING_AVG_WINDOW * self.frame_rate) == 0:
             """
-            Comparing values from history to find the number of vehicles passed in 1 sec
+            Moving Average Calculation
             """
-            self.car_c_neg.append((self.vehicle_count[0] - self.prev_car_c_neg))
-            self.bus_c_neg.append(self.vehicle_count[1] - self.prev_bus_c_neg)
-            self.motorbike_c_neg.append(self.vehicle_count[2] - self.prev_motorbike_c_neg)
-            self.car_c_pos.append(self.vehicle_count[4] - self.prev_car_c_pos)
-            self.bus_c_pos.append(self.vehicle_count[5] - self.prev_bus_c_pos)
-            self.motorbike_c_pos.append(self.vehicle_count[6] - self.prev_motorbike_c_pos)
-
+            self.vehicle_count[7] = self.vehicle_count[0] - self.prev_car_c_neg
+            self.vehicle_count[8] = self.vehicle_count[1] - self.prev_bus_c_neg
+            self.vehicle_count[9] = self.vehicle_count[2] - self.prev_motorbike_c_neg
+            self.vehicle_count[10] = self.vehicle_count[4] - self.prev_car_c_pos
+            self.vehicle_count[11] = self.vehicle_count[5] - self.prev_bus_c_pos
+            self.vehicle_count[12] = self.vehicle_count[6] - self.prev_motorbike_c_pos
             """
             Updating history
             """
@@ -430,23 +427,6 @@ class Sort(object):
             self.prev_car_c_pos = self.vehicle_count[4]
             self.prev_bus_c_pos = self.vehicle_count[5]
             self.prev_motorbike_c_pos = self.vehicle_count[6]
-
-            if self.frame_count % (self.MOVING_AVG_WINDOW * self.frame_rate) == 0:
-                """
-                Moving Average Calculation
-                """
-                self.vehicle_count[7] = round(sum(self.car_c_neg) / self.car_c_neg.__len__()) if self.car_c_neg.__len__() > 0 else 0
-                self.vehicle_count[8] = round(sum(self.bus_c_neg) / self.bus_c_neg.__len__()) if self.car_c_neg.__len__() > 0 else 0
-                self.vehicle_count[9] = round(sum(self.motorbike_c_neg) / self.motorbike_c_neg.__len__()) if self.car_c_neg.__len__() > 0 else 0
-                self.vehicle_count[10] = round(sum(self.car_c_pos) / self.car_c_pos.__len__()) if self.car_c_neg.__len__() > 0 else 0
-                self.vehicle_count[11] = round(sum(self.bus_c_pos) / self.bus_c_pos.__len__()) if self.car_c_neg.__len__() > 0 else 0
-                self.vehicle_count[12] = round(sum(self.motorbike_c_pos) / self.motorbike_c_pos.__len__()) if self.car_c_neg.__len__() > 0 else 0
-                self.car_c_neg.pop(0)
-                self.bus_c_neg.pop(0)
-                self.motorbike_c_neg.pop(0)
-                self.car_c_pos.pop(0)
-                self.bus_c_pos.pop(0)
-                self.motorbike_c_pos.pop(0)
 
         if len(ret) > 0:
             return np.concatenate(ret)
