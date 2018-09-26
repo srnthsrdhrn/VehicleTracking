@@ -22,6 +22,8 @@ from filterpy.kalman import KalmanFilter
 from numba import jit
 from sklearn.utils.linear_assignment_ import linear_assignment
 
+from SmartCity import settings
+
 
 @jit
 def iou(bb_test, bb_gt):
@@ -236,7 +238,6 @@ class Sort(object):
         self.line_coordinate = []
         self.new_video = False
         self.frame_rate = 0
-        self.MOVING_AVG_WINDOW = 5 * 60
         self.prev_car_c_neg = 0
         self.prev_car_c_pos = 0
         self.prev_bus_c_neg = 0
@@ -408,7 +409,7 @@ class Sort(object):
         c_neg = Count Negative | in flow
         c_pos = Count Positive | out flow
         """
-        if self.frame_count % (self.MOVING_AVG_WINDOW * self.frame_rate) == 0:
+        if self.frame_count /self.frame_rate % (settings.MOVING_AVERAGE_WINDOW) == 0:
             """
             Moving Average Calculation
             """

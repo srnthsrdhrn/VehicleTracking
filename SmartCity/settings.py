@@ -128,3 +128,5 @@ CRISPY_TEMPLATE_PACK = 'bootstrap3'
 
 resultQueue = PriorityQueue()
 buffer_queue = Queue()
+# Moving Average Window in Seconds
+MOVING_AVERAGE_WINDOW = 9

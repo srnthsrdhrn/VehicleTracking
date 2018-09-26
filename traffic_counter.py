@@ -3,16 +3,13 @@ import os
 import time
 from datetime import datetime
 from threading import Thread
-from queue import PriorityQueue, Queue
+
 import cv2
-import numpy as np
-from persistqueue import SQLiteQueue
+
 from Algorithm.models import Videos, VideoLog
-from SmartCity import buffer_queue, resultQueue
+from SmartCity import buffer_queue, resultQueue, settings
 from utils import run
 from utils.ArgumentsHandler import argHandler
-from diskcache import Deque
-import tensorflow as tf
 
 date = datetime.now().strftime("%d_%m_%Y_%H_%M_%S")
 # Deque(directory="media/dequeue_tmp/")
@@ -294,9 +291,9 @@ class DeepSenseTrafficManagement:
                 break
             self.elapsed += 1
             vehicle_count = self.Tracker.vehicle_count
-            if self.elapsed / self.frame_rate % 5 == 0:
-                    VideoLog.objects.create(video=self.video_obj, moving_avg=str(vehicle_count[7:]))
-            if self.elapsed / self.frame_rate % 5 == 0:
+            if (self.elapsed / self.frame_rate) % settings.MOVING_AVERAGE_WINDOW == 0:
+                VideoLog.objects.create(video=self.video_obj, moving_avg=str(vehicle_count[7:]))
+            if (self.elapsed / self.frame_rate) % settings.MOVING_AVERAGE_WINDOW == 0:
                 csv_writer.writerow(vehicle_count)
                 csv_file.flush()
                 VideoLog.objects.create(video=self.video_obj, data=str(vehicle_count))

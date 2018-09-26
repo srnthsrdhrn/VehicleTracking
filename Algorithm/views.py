@@ -13,6 +13,7 @@ from pytz import timezone
 
 from Algorithm.forms import VideoProcessForm
 from Algorithm.models import Videos, VideoLog
+from SmartCity import settings
 
 
 def landing_page(request):
@@ -180,9 +181,14 @@ def VideoLogAPI(request):
     time.reverse()
     data = [car_inflow, car_outflow, bike_inflow, bike_outflow,
             truck_inflow, truck_outflow]
-    return HttpResponse(json.dumps({"y": data, "x": time}))
+    log = VideoLog.objects.filter(moving_avg__isnull=True, video_id=video_id).order_by('-created_at')
+    vehicle_count = []
+    if log.exists():
+        vehicle_count = log[0].data
+    return HttpResponse(json.dumps({"vehicle_count": vehicle_count, "data": {"y": data, "x": time}}))
 
 
 def VideoOutput(request, pk, is_move_avg):
     return render(request, 'algorithm/output_graph.html',
-                  {'video_id': pk, 'is_moving_avg': True if int(is_move_avg) == 1 else False})
+                  {'video_id': pk, 'is_moving_avg': True if int(is_move_avg) == 1 else False,
+                   'update_time': settings.MOVING_AVERAGE_WINDOW})
