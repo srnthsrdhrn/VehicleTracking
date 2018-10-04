@@ -7,9 +7,10 @@ from threading import Thread
 import cv2
 
 from Algorithm.models import Videos, VideoLog
-from SmartCity import buffer_queue, resultQueue, settings
-from utils import run
-from utils.ArgumentsHandler import argHandler
+from SmartCity import settings
+from SmartCity.settings import bufferQueueDict, resultQueueDict
+from custom_utils import run
+from custom_utils.ArgumentsHandler import argHandler
 
 date = datetime.now().strftime("%d_%m_%Y_%H_%M_%S")
 # Deque(directory="media/dequeue_tmp/")
@@ -47,7 +48,7 @@ def image_resize(image, width=None, height=None, inter=cv2.INTER_AREA):
 class DeepSenseTrafficManagement:
     def __init__(self, line_coordinates, file, video_id, path):
         """
-        Various flags that control the gui working. Flags regarding the algorithms can be found in the run.py file
+        Various flags that control the gui working. Flagoos regarding the algorithms can be found in the run.py file
         """
         self.elapsed = 0
         self.check_counter = 0
@@ -81,7 +82,7 @@ class DeepSenseTrafficManagement:
         # self.start_feeder()
         self.start_collection()
         self.start_checker(video_id)
-        self.video_obj = Videos.objects.get(id=video_id)
+        self.video_id = video_id
 
     def input_source(self, file, path):
         if file == "IPCAM":
@@ -126,6 +127,7 @@ class DeepSenseTrafficManagement:
         return camera
 
     def raw_video(self):
+        frame = None
         if self.source.isOpened:
             _, frame = self.source.read()
         return frame
@@ -157,12 +159,12 @@ class DeepSenseTrafficManagement:
                 #         break
                 while True:
                     try:
-                        resultQueue.get(timeout=5)
+                        resultQueueDict[video_id].get(timeout=5)
                     except Exception:
                         break
                 while True:
                     try:
-                        buffer_queue.get(timeout=5)
+                        bufferQueueDict[video_id].get(timeout=5)
                     except Exception:
                         break
                 self.source.release()
@@ -207,7 +209,7 @@ class DeepSenseTrafficManagement:
             #     frame_flag = True
             self.counter += 1
             if frame is not None:
-                buffer_queue.put((self.counter, frame))
+                bufferQueueDict[self.video_id].put((self.counter, frame))
             time.sleep(wait_time)
 
     def kalman_process(self):
@@ -220,20 +222,20 @@ class DeepSenseTrafficManagement:
         # return frame
         try:
             # while True:
-            counter, detections, boxes_final, imgcv = resultQueue.get()
+            counter, detections, boxes_final, imgcv = resultQueueDict[self.video_id].get()
             # if self.check_counter + 1 == counter:
             #     break
             # else:
             #     resultQueue.put((counter, detections, boxes_final, imgcv))
             # self.check_counter = counter
-        except Exception:
-            print("Result Queue Empty and Timed out after 30 seconds")
+        except Exception as e:
+            print("Result Queue Empty and Timed out after 30 seconds " + str(e))
             return None
         # print("Result Queue size {}".format(resultQueue.qsize()))
         # print("Buffer Queue size {}".format(buffer_queue.qsize()))
         tracker = self.Tracker
         h, w, _ = imgcv.shape
-        thick = int((h + w) // 300)
+        # thick = int((h + w) // 300)
         line_coordinate = tracker.line_coordinate
         cv2.line(imgcv, (line_coordinate[0], line_coordinate[1]), (line_coordinate[2], line_coordinate[3]),
                  (0, 0, 255), 6)
@@ -292,11 +294,11 @@ class DeepSenseTrafficManagement:
             self.elapsed += 1
             vehicle_count = self.Tracker.vehicle_count
             if (self.elapsed / self.frame_rate) % settings.MOVING_AVERAGE_WINDOW == 0:
-                VideoLog.objects.create(video=self.video_obj, moving_avg=str(vehicle_count[7:]))
+                VideoLog.objects.create(video_id=self.video_id, moving_avg=str(vehicle_count[7:]))
             if (self.elapsed / self.frame_rate) % settings.MOVING_AVERAGE_WINDOW == 0:
                 csv_writer.writerow(vehicle_count)
                 csv_file.flush()
-                VideoLog.objects.create(video=self.video_obj, data=str(vehicle_count))
+                VideoLog.objects.create(video_id=self.video_id, data=str(vehicle_count))
             # VehicleCount.objects.create()
             # FONT = cv2.FONT_HERSHEY_SIMPLEX
             # FONT_SCALE = 0.4
@@ -408,7 +410,7 @@ class DeepSenseTrafficManagement:
             # img = np.row_stack((frame, blank_image))
             # self.out.write(img)
             self.current_frame = self.get_postprocessed()
-        self.exit_threads = True
+        # self.exit_threads = True
         # self.out.release()
         csv_file.close()
         self.source.release()

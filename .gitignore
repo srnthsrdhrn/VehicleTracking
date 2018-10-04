@@ -121,5 +121,6 @@ queue_db/
 media/tmp/
 media/processed/
 *.sqlite3
-
+darkflow/summary/
 *.m4v
+*.env

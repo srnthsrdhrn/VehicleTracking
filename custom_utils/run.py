@@ -1,6 +1,6 @@
 from darkflow.darkflow.defaults import argHandler  # Import the default arguments
 from darkflow.darkflow.net.build import TFNet
-
+import os
 
 def manual_setting():
     FLAGS = argHandler()
@@ -13,7 +13,7 @@ def manual_setting():
     # FLAGS.metaLoad = "tiny-yolo-voc-traffic.meta" # tensorflow weights
     FLAGS.threshold = 0.3  # threshold of decesion confidance (detection if confidance > threshold )
     FLAGS.max_gpu_usage = 0.90
-    FLAGS.number_of_parallel_threads = 3
+    FLAGS.number_of_parallel_threads = os.environ.get("NO_OF_THREADS",2)
     FLAGS.gpu = FLAGS.max_gpu_usage / FLAGS.number_of_parallel_threads  # how much of the GPU to use (between 0 and 1) 0 means use cpu
     FLAGS.track = True  # wheither to activate tracking or not
     FLAGS.trackObj = ['car', 'bus',

@@ -1,5 +1,6 @@
 import json
 import time
+from queue import PriorityQueue, Queue
 from threading import Thread
 
 import cv2
@@ -110,6 +111,10 @@ def initiate_process(pk):
     path = video.file.path if video.file else video.ip_link
     file = video.file.name if video.file else "IPCAM"
     DeepSenseTrafficManagement(line_coordinates, file, pk, path)
+    resultQueue = PriorityQueue()
+    bufferQueue = Queue()
+    settings.resultQueueDict[pk] = resultQueue
+    settings.bufferQueueDict[pk] = bufferQueue
 
 
 def stop_processes(request, pk):

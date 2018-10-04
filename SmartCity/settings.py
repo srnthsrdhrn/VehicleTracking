@@ -13,7 +13,6 @@ https://docs.djangoproject.com/en/2.1/ref/settings/
 import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-from queue import Queue, PriorityQueue
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -126,7 +125,7 @@ MEDIA_URL = '/media/'
 
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
 
-resultQueue = PriorityQueue()
-buffer_queue = Queue()
+resultQueueDict = {}
+bufferQueueDict = {}
 # Moving Average Window in Seconds
 MOVING_AVERAGE_WINDOW = 9
