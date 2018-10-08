@@ -106,15 +106,17 @@ def start_processing(request, pk):
 def initiate_process(pk):
     from traffic_counter import DeepSenseTrafficManagement
     video = Videos.objects.get(id=pk)
+    video.processed = True
+    video.save()
     line_coordinates = [video.line_coord_init_x, video.line_coord_init_y, video.line_coord_end_x,
                         video.line_coord_end_y]
     path = video.file.path if video.file else video.ip_link
     file = video.file.name if video.file else "IPCAM"
-    DeepSenseTrafficManagement(line_coordinates, file, pk, path)
     resultQueue = PriorityQueue()
     bufferQueue = Queue()
     settings.resultQueueDict[pk] = resultQueue
     settings.bufferQueueDict[pk] = bufferQueue
+    DeepSenseTrafficManagement(line_coordinates, file, pk, path)
 
 
 def stop_processes(request, pk):

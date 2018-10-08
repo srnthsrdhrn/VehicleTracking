@@ -46,23 +46,21 @@ if os.environ.get("SERVER", False):
                 time.sleep(2)
 
 
-    def round_robin_enqueue(args):
-        global buffer_queue, resultQueue
+    def round_robin_enqueue(bufferQueueDict, buffer_queue):
         while True:
             try:
                 for key, value in bufferQueueDict.items():
                     counter, frame = value.get()
-                    buffer_queue.put(counter, frame, key)
+                    buffer_queue.put([counter, frame, key])
             except Exception as e:
                 print(str(e))
 
 
-    def round_robin_dequeue(args):
-        global buffer_queue, resultQueue
+    def round_robin_dequeue(resultQueueDict, resultQueue):
         while True:
             try:
                 counter, detections, boxes_final, imgcv, video_id = resultQueue.get()
-                resultQueueDict[video_id].put(counter, detections, boxes_final, imgcv)
+                resultQueueDict[video_id].put([counter, detections, boxes_final, imgcv])
             except Exception as e:
                 print(str(e))
 
@@ -79,9 +77,9 @@ if os.environ.get("SERVER", False):
 
         except Exception as e:
             pass
-    t = Thread(target=round_robin_enqueue, args=(1,))
+    t = Thread(target=round_robin_enqueue, args=(settings.bufferQueueDict, buffer_queue))
     t.daemon = True
     t.start()
-    t = Thread(target=round_robin_dequeue, args=(1,))
+    t = Thread(target=round_robin_dequeue, args=(settings.resultQueueDict, resultQueue))
     t.daemon = True
     t.start()

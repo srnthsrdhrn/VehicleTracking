@@ -114,5 +114,5 @@ def postprocess(self, net_out, im, resultQueue, video_id, counter):
         if len(detections) < 3 and self.FLAGS.BK_MOG:
             detections = detections + extract_boxes(self, None)
         detections = np.array(detections)
-        resultQueue.put((counter, detections, boxes_final, imgcv, video_id))
+        resultQueue.put([counter, detections, boxes_final, imgcv, video_id])
     # return imgcv  # ,avg_flow_car, avg_flow_bus, avg_flow_motorbike

@@ -71,6 +71,9 @@ class DeepSenseTrafficManagement:
         self.Tracker.line_coordinate = line_coordinates
         self.moving_avg = []
         self.prev_vehicle_count = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        self.video_id = video_id
+        self.wait_time = 0.05
+        self.wait_count = 1
         # [start_x, start_y, end_x, end_y]
 
         """
@@ -81,8 +84,7 @@ class DeepSenseTrafficManagement:
         self.start_buffer_feeder()
         # self.start_feeder()
         self.start_collection()
-        self.start_checker(video_id)
-        self.video_id = video_id
+        # self.start_checker(video_id)
 
     def input_source(self, file, path):
         if file == "IPCAM":
@@ -179,9 +181,10 @@ class DeepSenseTrafficManagement:
     def buffer_feeder(self):
         self.counter = 0
         # frame_flag = True
-        wait_time = 0.05
+
         # buffer_velocity = []
         # prev_buffer_length = 0
+
         while True:
             if self.exit_threads:
                 print("Exiting Buffer Feeder")
@@ -209,8 +212,15 @@ class DeepSenseTrafficManagement:
             #     frame_flag = True
             self.counter += 1
             if frame is not None:
-                bufferQueueDict[self.video_id].put((self.counter, frame))
-            time.sleep(wait_time)
+                bufferQueueDict[self.video_id].put([self.counter, frame])
+                print("Video: {} Buffer Q Size {}".format(self.video_id, bufferQueueDict[self.video_id].qsize()))
+                videos = Videos.objects.filter(processed=True)
+                if videos.exists():
+                    if self.wait_count != videos.count():
+                        self.wait_time = (self.wait_time * videos.count()) + 0.01
+                        self.wait_count = videos.count()
+
+            time.sleep(self.wait_time)
 
     def kalman_process(self):
         """
@@ -220,19 +230,21 @@ class DeepSenseTrafficManagement:
 
         # counter, frame = resultQueue.get()
         # return frame
-        try:
-            # while True:
-            counter, detections, boxes_final, imgcv = resultQueueDict[self.video_id].get()
-            # if self.check_counter + 1 == counter:
-            #     break
-            # else:
-            #     resultQueue.put((counter, detections, boxes_final, imgcv))
-            # self.check_counter = counter
-        except Exception as e:
-            print("Result Queue Empty and Timed out after 30 seconds " + str(e))
-            return None
-        # print("Result Queue size {}".format(resultQueue.qsize()))
-        # print("Buffer Queue size {}".format(buffer_queue.qsize()))
+        while True:
+            try:
+                # while True:
+                counter, detections, boxes_final, imgcv = resultQueueDict[self.video_id].get()
+                break
+                # if self.check_counter + 1 == counter:
+                #     break
+                # else:
+                #     resultQueue.put((counter, detections, boxes_final, imgcv))
+                # self.check_counter = counter
+            except Exception as e:
+                print("Result Queue Empty and Timed out after 30 seconds " + str(e))
+                pass
+            # print("Result Queue size {}".format(resultQueue.qsize()))
+            # print("Buffer Queue size {}".format(buffer_queue.qsize()))
         tracker = self.Tracker
         h, w, _ = imgcv.shape
         # thick = int((h + w) // 300)
