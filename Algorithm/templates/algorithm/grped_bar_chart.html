@@ -1,0 +1,140 @@
+{% extends 'theme/admin/base.html' %}
+{% block content_wrapper %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.js"></script>
+    <!--<p id="total_count"></p>-->
+    <center><h3>Moving Average Bar Graph</h3></center>
+    <canvas id="vehicleChart"></canvas>
+    <script>
+        window.onload = function () {
+
+
+            var ctx = document.getElementById("vehicleChart").getContext("2d");
+
+            Chart.defaults.global.defaultFontFamily = "Lato";
+            Chart.defaults.global.defaultFontSize = 18;
+            Chart.defaults.global.defaultFontStyle = "bold";
+            var chartOptions = {
+                barValueSpacing: 20,
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        boxWidth: 80,
+                        fontColor: 'black'
+                    }
+                },
+                scales: {
+                    yAxes: [{
+                        scaleLabel: {
+                            display: true,
+                            labelString: 'Count',
+                            fontSize: 30
+                        }
+                    }],
+                    xAxes: [{
+                        scaleLabel: {
+                            display: true,
+                            labelString: 'Time',
+                            fontSize: 30
+                        }
+                    }]
+                }
+            };
+
+            myBarChart = new Chart(ctx, {
+                type: 'bar',
+                options: chartOptions,
+            });
+            var url = "{% url 'video_log_api' %}?video_id={{ video_id }}&is_moving_avg=1&time_gap=100";
+            $.get(url, function (data, status) {
+                var data = JSON.parse(data);
+                data = data.data;
+                console.log(data);
+                myBarChart.data = {
+                    labels: data.x,
+                    datasets: [
+                        {
+                            label: "Car inflow",
+                            backgroundColor: "red",
+                            data: data.y[0]
+                        },
+                        {
+                            label: "Car Out Flow",
+                            backgroundColor: "blue",
+                            data: data.y[1]
+                        },
+                        {
+                            label: "Bike In Flow",
+                            backgroundColor: "green",
+                            data: data.y[2]
+                        },
+                        {
+                            label: "Bike Out Flow",
+                            backgroundColor: "orange",
+                            data: data.y[3]
+                        },
+                        {
+                            label: "Truck In Flow",
+                            backgroundColor: "brown",
+                            data: data.y[4]
+                        },
+                        {
+                            label: "Truck Out Flow",
+                            backgroundColor: "black",
+                            data: data.y[5]
+                        },
+                    ]
+                };
+                myBarChart.update();
+
+            });
+            setInterval(function () {
+                var url = "{% url 'video_log_api' %}?video_id={{ video_id }}&is_moving_avg=1&time_gap=100";
+                $.get(url, function (data, status) {
+                    var data = JSON.parse(data);
+                    data = data.data;
+                    console.log(data.x);
+                    myBarChart.data = {
+                        labels: data.date,
+                        datasets: [
+                            {
+                                label: "Car inflow",
+                                backgroundColor: "red",
+                                data: data.y[0]
+                            },
+                            {
+                                label: "Car Out Flow",
+                                backgroundColor: "blue",
+                                data: data.y[1]
+                            },
+                            {
+                                label: "Bike In Flow",
+                                backgroundColor: "green",
+                                data: data.y[2]
+                            },
+                            {
+                                label: "Bike Out Flow",
+                                backgroundColor: "orange",
+                                data: data.y[3]
+                            },
+                            {
+                                label: "Truck In Flow",
+                                backgroundColor: "brown",
+                                data: data.y[4]
+                            },
+                            {
+                                label: "Truck Out Flow",
+                                backgroundColor: "black",
+                                data: data.y[5]
+                            },
+                        ]
+                    };
+                    myBarChart.update();
+
+                });
+            },{{update_time}} * 1000
+        )
+            ;
+        }
+    </script>
+{% endblock %}

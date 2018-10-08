@@ -147,21 +147,61 @@ def VideoLogAPI(request):
     video_id = request.GET.get("video_id")
     logs = VideoLog.objects.filter(video_id=video_id).order_by('-created_at')
     is_moving_avg = request.GET.get("is_moving_avg")
-    if is_moving_avg and int(is_moving_avg) == 1:
-        logs = logs.filter(moving_avg__isnull=False)
-    else:
-        logs = logs.filter(moving_avg__isnull=True)
-    if logs.exists():
-        logs = logs[:10]
+    time_gap = request.GET.get("time_gap")
+    count = 10
     car_inflow = []
     car_outflow = []
     bike_inflow = []
     bike_outflow = []
     truck_inflow = []
     truck_outflow = []
+    ci = 0
+    co = 0
+    bi = 0
+    bo = 0
+    ti = 0
+    to = 0
     time = []
+    t_count = 0
+    if is_moving_avg and int(is_moving_avg) == 1:
+        logs = logs.filter(moving_avg__isnull=False)
+    else:
+        logs = logs.filter(moving_avg__isnull=True)
+    if time_gap:
+        time_gap = int(time_gap)
+        count = count * time_gap
+    if logs.exists():
+        logs = logs[:count]
+        asia = timezone("Asia/Kolkata")
+        time.append(logs[0].created_at.astimezone(asia).strftime("%H:%M"))
     for log in logs:
-        if is_moving_avg and int(is_moving_avg) == 1:
+        if time_gap:
+            if t_count % time_gap == 0 and t_count > 1:
+                car_inflow.append(ci)
+                car_outflow.append(co)
+                bike_inflow.append(bi)
+                bike_outflow.append(bo)
+                truck_inflow.append(ti)
+                truck_outflow.append(to)
+                ci = 0
+                co = 0
+                bi = 0
+                bo = 0
+                ti = 0
+                to = 0
+                t_count = 0
+                asia = timezone("Asia/Kolkata")
+                time.append(log.created_at.astimezone(asia).strftime("%H:%M"))
+            else:
+                t_count += 1
+                temp = json.loads(log.moving_avg)
+                ci += temp[0]
+                co += temp[3]
+                bi += temp[1]
+                bo += temp[4]
+                ti += temp[2]
+                to += temp[5]
+        elif is_moving_avg and int(is_moving_avg) == 1:
             temp = json.loads(log.moving_avg)
             car_inflow.append(temp[0])
             car_outflow.append(temp[3])
@@ -177,8 +217,6 @@ def VideoLogAPI(request):
             bike_outflow.append(temp[5])
             truck_inflow.append(temp[2])
             truck_outflow.append(temp[6])
-        asia = timezone("Asia/Kolkata")
-        time.append(log.created_at.astimezone(asia).strftime("%D %H:%M:%S"))
     car_inflow.reverse()
     car_outflow.reverse()
     bike_inflow.reverse()
@@ -186,6 +224,8 @@ def VideoLogAPI(request):
     truck_inflow.reverse()
     truck_outflow.reverse()
     time.reverse()
+    if time_gap:
+        time.pop()
     data = [car_inflow, car_outflow, bike_inflow, bike_outflow,
             truck_inflow, truck_outflow]
     log = VideoLog.objects.filter(moving_avg__isnull=True, video_id=video_id).order_by('-created_at')
@@ -199,3 +239,7 @@ def VideoOutput(request, pk, is_move_avg):
     return render(request, 'algorithm/output_graph.html',
                   {'video_id': pk, 'is_moving_avg': True if int(is_move_avg) == 1 else False,
                    'update_time': settings.MOVING_AVERAGE_WINDOW})
+
+
+def BarChartOutput(request,pk):
+    return render(request, 'algorithm/grped_bar_chart.html', {'update_time': 900,'video_id':pk})
