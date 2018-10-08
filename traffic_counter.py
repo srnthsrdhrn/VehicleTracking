@@ -212,8 +212,10 @@ class DeepSenseTrafficManagement:
             #     frame_flag = True
             self.counter += 1
             if frame is not None:
-                bufferQueueDict[self.video_id].put([self.counter, frame])
-                print("Video: {} Buffer Q Size {}".format(self.video_id, bufferQueueDict[self.video_id].qsize()))
+                settings.bufferMutex.acquire()
+                settings.bufferQueue.put([self.counter, frame])
+                settings.bufferMutex.release()
+                # print("Video: {} Buffer Q Size {}".format(self.video_id, bufferQueueDict[self.video_id].qsize()))
                 videos = Videos.objects.filter(processed=True)
                 if videos.exists():
                     if self.wait_count != videos.count():
@@ -233,7 +235,9 @@ class DeepSenseTrafficManagement:
         while True:
             try:
                 # while True:
-                counter, detections, boxes_final, imgcv = resultQueueDict[self.video_id].get()
+                settings.resultMutex.acquire()
+                counter, detections, boxes_final, imgcv = settings.resultQueue.get()
+                settings.resultMutex.release()
                 break
                 # if self.check_counter + 1 == counter:
                 #     break
