@@ -209,6 +209,8 @@ def VideoLogAPI(request):
             bike_outflow.append(temp[4])
             truck_inflow.append(temp[2])
             truck_outflow.append(temp[5])
+            asia = timezone("Asia/Kolkata")
+            time.append(log.created_at.astimezone(asia).strftime("%H:%M"))
         else:
             temp = json.loads(log.data)
             car_inflow.append(temp[0])
@@ -217,6 +219,8 @@ def VideoLogAPI(request):
             bike_outflow.append(temp[5])
             truck_inflow.append(temp[2])
             truck_outflow.append(temp[6])
+            asia = timezone("Asia/Kolkata")
+            time.append(log.created_at.astimezone(asia).strftime("%H:%M"))
     car_inflow.reverse()
     car_outflow.reverse()
     bike_inflow.reverse()
@@ -242,4 +246,4 @@ def VideoOutput(request, pk, is_move_avg):
 
 
 def BarChartOutput(request,pk):
-    return render(request, 'algorithm/grped_bar_chart.html', {'update_time': 900,'video_id':pk})
+    return render(request, 'algorithm/grped_bar_chart.html', {'update_time': 300,'video_id':pk})

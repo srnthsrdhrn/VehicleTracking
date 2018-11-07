@@ -12,9 +12,9 @@ def manual_setting():
     # FLAGS.pbLoad = "tiny-yolo-voc-traffic.pb" # tensorflow model
     # FLAGS.metaLoad = "tiny-yolo-voc-traffic.meta" # tensorflow weights
     FLAGS.threshold = 0.3  # threshold of decesion confidance (detection if confidance > threshold )
-    FLAGS.max_gpu_usage = 0.7
+    FLAGS.max_gpu_usage = 0.9
     FLAGS.number_of_parallel_threads = int(os.environ.get("NO_OF_THREADS",2))
-    FLAGS.gpu = FLAGS.max_gpu_usage / FLAGS.number_of_parallel_threads  # how much of the GPU to use (between 0 and 1) 0 means use cpu
+    FLAGS.gpu = FLAGS.max_gpu_usage# / FLAGS.number_of_parallel_threads  # how much of the GPU to use (between 0 and 1) 0 means use cpu
     FLAGS.track = True  # wheither to activate tracking or not
     FLAGS.trackObj = ['car', 'bus',
                       'motorbike']  # ['Bicyclist','Pedestrian','Skateboarder','Cart','Car','Bus']  the object to be tracked

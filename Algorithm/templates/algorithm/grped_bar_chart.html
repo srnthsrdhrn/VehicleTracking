@@ -45,7 +45,7 @@
                 type: 'bar',
                 options: chartOptions,
             });
-            var url = "{% url 'video_log_api' %}?video_id={{ video_id }}&is_moving_avg=1&time_gap=100";
+            var url = "{% url 'video_log_api' %}?video_id={{ video_id }}&is_moving_avg=1&time_gap=33";
             $.get(url, function (data, status) {
                 var data = JSON.parse(data);
                 data = data.data;
@@ -89,7 +89,7 @@
 
             });
             setInterval(function () {
-                var url = "{% url 'video_log_api' %}?video_id={{ video_id }}&is_moving_avg=1&time_gap=100";
+                var url = "{% url 'video_log_api' %}?video_id={{ video_id }}&is_moving_avg=1&time_gap=33";
                 $.get(url, function (data, status) {
                     var data = JSON.parse(data);
                     data = data.data;
@@ -132,7 +132,7 @@
                     myBarChart.update();
 
                 });
-            },{{update_time}} * 1000
+            },330 * 1000
         )
             ;
         }
