@@ -13,8 +13,6 @@ https://docs.djangoproject.com/en/2.1/ref/settings/
 import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-from queue import Queue
-from threading import Lock
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -131,7 +129,3 @@ resultQueueDict = {}
 bufferQueueDict = {}
 # Moving Average Window in Seconds
 MOVING_AVERAGE_WINDOW = 9
-bufferQueue = Queue()
-resultQueue = Queue()
-bufferMutex = Lock()
-resultMutex = Lock()

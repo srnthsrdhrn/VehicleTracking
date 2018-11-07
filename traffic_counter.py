@@ -233,9 +233,7 @@ class DeepSenseTrafficManagement:
         while True:
             try:
                 # while True:
-                settings.resultMutex.acquire()
-                counter, detections, boxes_final, imgcv = settings.resultQueue.get()
-                settings.resultMutex.release()
+                counter, detections, boxes_final, imgcv = resultQueueDict[self.video_id].get()
                 break
                 # if self.check_counter + 1 == counter:
                 #     break

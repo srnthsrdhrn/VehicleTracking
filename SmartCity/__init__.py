@@ -7,26 +7,21 @@ import django
 django.setup()
 
 if os.environ.get("SERVER", False):
-    # buffer_queue = Queue()
-    # resultQueue = Queue()
+    buffer_queue = Queue()
+    resultQueue = Queue()
     from custom_utils import run
     from custom_utils.ArgumentsHandler import argHandler
-    from SmartCity import settings
-    # from SmartCity.settings import resultQueueDict, bufferQueueDict
+    from SmartCity.settings import resultQueueDict, bufferQueueDict
     import tensorflow as tf
-    from threading import Lock
-    mutex = Lock()
+
 
     def worker_process(worker_id, FLAGS):
-        # global buffer_queue, resultQueue
+        global buffer_queue, resultQueue
         tfnet = run.Initialize(FLAGS)
         print("Worker {} Ready".format(worker_id))
         while True:
             try:
-                settings.bufferMutex.acquire()
-                counter, frame, video_id = settings.bufferQueue.get()
-                settings.bufferMutex.release()
-
+                counter, frame, video_id = buffer_queue.get()
                 with tf.device("/cpu:0"):
                     preprocessed = tfnet.framework.preprocess(frame)
 
@@ -41,9 +36,7 @@ if os.environ.get("SERVER", False):
 
                 with tf.device("/cpu:0"):
                     for img, single_out in zip(buffer_inp, net_out):
-                        settings.resultMutex.acquire()
-                        tfnet.framework.postprocess(single_out, img, settings.resultQueue, video_id, counter=counter)
-                        settings.resultMutex.release()
+                        tfnet.framework.postprocess(single_out, img, resultQueue, video_id, counter=counter)
 
             except KeyboardInterrupt:
                 print("Keyboard Interrupt. Exiting Worker {}".format(worker_id))
@@ -53,23 +46,23 @@ if os.environ.get("SERVER", False):
                 time.sleep(2)
 
 
-    # def round_robin_enqueue(bufferQueueDict, buffer_queue):
-    #     while True:
-    #         try:
-    #             for key, value in bufferQueueDict.items():
-    #                 counter, frame = value.get()
-    #                 buffer_queue.put([counter, frame, key])
-    #         except Exception as e:
-    #             print(str(e))
-    #
-    #
-    # def round_robin_dequeue(resultQueueDict, resultQueue):
-    #     while True:
-    #         try:
-    #             counter, detections, boxes_final, imgcv, video_id = resultQueue.get()
-    #             resultQueueDict[video_id].put([counter, detections, boxes_final, imgcv])
-    #         except Exception as e:
-    #             print(str(e))
+    def round_robin_enqueue(bufferQueueDict, buffer_queue):
+        while True:
+            try:
+                for key, value in bufferQueueDict.items():
+                    counter, frame = value.get()
+                    buffer_queue.put([counter, frame, key])
+            except Exception as e:
+                print(str(e))
+
+
+    def round_robin_dequeue(resultQueueDict, resultQueue):
+        while True:
+            try:
+                counter, detections, boxes_final, imgcv, video_id = resultQueue.get()
+                resultQueueDict[video_id].put([counter, detections, boxes_final, imgcv])
+            except Exception as e:
+                print(str(e))
 
 
     FLAGS = run.manual_setting()
@@ -84,9 +77,9 @@ if os.environ.get("SERVER", False):
 
         except Exception as e:
             pass
-    # t = Thread(target=round_robin_enqueue, args=(settings.bufferQueueDict, buffer_queue))
-    # t.daemon = True
-    # t.start()
-    # t = Thread(target=round_robin_dequeue, args=(settings.resultQueueDict, resultQueue))
-    # t.daemon = True
-    # t.start()
+    t = Thread(target=round_robin_enqueue, args=(settings.bufferQueueDict, buffer_queue))
+    t.daemon = True
+    t.start()
+    t = Thread(target=round_robin_dequeue, args=(settings.resultQueueDict, resultQueue))
+    t.daemon = True
+    t.start()
