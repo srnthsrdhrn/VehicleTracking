@@ -1,4 +1,5 @@
 import csv
+import numpy as np
 import os
 import time
 from datetime import datetime
@@ -14,6 +15,8 @@ from custom_utils.ArgumentsHandler import argHandler
 
 date = datetime.now().strftime("%d_%m_%Y_%H_%M_%S")
 # Deque(directory="media/dequeue_tmp/")
+if not os.path.isdir("media/output_file"):
+    os.mkdir("media/output_file")
 csv_file = open("media/output_file/Video_{}.csv".format(datetime.now().strftime("%d_%m_%Y_%H_%M_%S")), 'w')
 csv_writer = csv.writer(csv_file)
 
@@ -106,25 +109,23 @@ class DeepSenseTrafficManagement:
         self.Tracker.frame_width = self.frame_width
         self.Tracker.frame_height = self.frame_height
         self.Tracker.frame_rate = self.frame_rate
-        # fourcc = cv2.VideoWriter_fourcc(*'DIVX')
-        # # date = datetime.now().strftime("%d_%m_%Y_%H_%M_%S")
-        # file = file.split(".")[0]
-        # OUTPUT_FILE_NAME = 'media\processed\{}.mp4'.format(file)
-        # # self.VIDEO_SCALE_RATIO = 1
-        # RATIO_OF_BELOW_BOX = 0.35
-        # _, frame = camera.read()
-        # # frame = cv2.resize(frame, None, fx=self.VIDEO_SCALE_RATIO, fy=self.VIDEO_SCALE_RATIO,
-        # #                    interpolation=cv2.INTER_LINEAR)
-        # width = frame.shape[1]
-        # height = frame.shape[0]
-        # b_height = round(frame.shape[0] * RATIO_OF_BELOW_BOX)
-        #
-        # blank_image = np.zeros((b_height, width, 3), np.uint8)
-        # blank_image[np.where((blank_image == [0, 0, 0]).all(axis=2))] = [240, 240, 240]
-        # img = np.row_stack((frame, blank_image))
-        # fheight = img.shape[0]
-        # fwidth = img.shape[1]
-        # self.out = cv2.VideoWriter(OUTPUT_FILE_NAME, fourcc, self.frame_rate, (fwidth, fheight), True)
+        self.fourcc = cv2.VideoWriter_fourcc(*'DIVX')
+        # date = datetime.now().strftime("%d_%m_%Y_%H_%M_%S")
+        self.file = file.split(".")[0]
+        # self.VIDEO_SCALE_RATIO = 1
+        RATIO_OF_BELOW_BOX = 0.35
+        _, frame = camera.read()
+        # frame = cv2.resize(frame, None, fx=self.VIDEO_SCALE_RATIO, fy=self.VIDEO_SCALE_RATIO,
+        #                    interpolation=cv2.INTER_LINEAR)
+        width = frame.shape[1]
+        height = frame.shape[0]
+        b_height = round(frame.shape[0] * RATIO_OF_BELOW_BOX)
+
+        blank_image = np.zeros((b_height, width, 3), np.uint8)
+        blank_image[np.where((blank_image == [0, 0, 0]).all(axis=2))] = [240, 240, 240]
+        img = np.row_stack((frame, blank_image))
+        self.fheight = img.shape[0]
+        self.fwidth = img.shape[1]
 
         return camera
 
@@ -247,7 +248,7 @@ class DeepSenseTrafficManagement:
             # print("Buffer Queue size {}".format(buffer_queue.qsize()))
         tracker = self.Tracker
         h, w, _ = imgcv.shape
-        # thick = int((h + w) // 300)
+        thick = int((h + w) // 300)
         line_coordinate = tracker.line_coordinate
         cv2.line(imgcv, (line_coordinate[0], line_coordinate[1]), (line_coordinate[2], line_coordinate[3]),
                  (0, 0, 255), 6)
@@ -255,26 +256,27 @@ class DeepSenseTrafficManagement:
             return imgcv  # , tracker.vehicle_count[4], tracker.vehicle_count[5], tracker.vehicle_count[6]
         else:
             trackers = tracker.update(detections, boxes_final)
-        # for track in trackers:
-        #     bbox = [int(track[0]), int(track[1]), int(track[2]), int(track[3])]
-        #     for i in range(len(boxes_final)):
-        #         box = boxes_final[i]
-        #
-        #         if (((box[2]) - 30) <= int(bbox[1]) <= ((box[2]) + 30) and ((box[0]) - 30) <= bbox[0] <= (
-        #                 (box[0]) + 30)):
-        #             global v_name
-        #             v_name = box[4]
-        #
-        #     if v_name == 'car':
-        #         cv2.rectangle(imgcv, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])),
-        #                       (255, 255, 255), thick // 3)
-        #     if v_name == 'bus':
-        #         cv2.rectangle(imgcv, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])),
-        #                       (0, 0, 255), thick // 3)
-        #
-        #     if v_name == 'motorbike':
-        #         cv2.rectangle(imgcv, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])),
-        #                       (0, 255, 0), thick // 3)
+
+        for track in trackers:
+            bbox = [int(track[0]), int(track[1]), int(track[2]), int(track[3])]
+            for i in range(len(boxes_final)):
+                box = boxes_final[i]
+
+                if (((box[2]) - 30) <= int(bbox[1]) <= ((box[2]) + 30) and ((box[0]) - 30) <= bbox[0] <= (
+                        (box[0]) + 30)):
+                    global v_name
+                    v_name = box[4]
+
+            if v_name == 'car':
+                cv2.rectangle(imgcv, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])),
+                              (255, 255, 255), thick // 3)
+            if v_name == 'bus':
+                cv2.rectangle(imgcv, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])),
+                              (0, 0, 255), thick // 3)
+
+            if v_name == 'motorbike':
+                cv2.rectangle(imgcv, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])),
+                              (0, 255, 0), thick // 3)
         return imgcv
 
     def get_postprocessed(self):
@@ -295,6 +297,11 @@ class DeepSenseTrafficManagement:
         """
         global csv_file, csv_writer
         self.current_frame = self.get_postprocessed()
+        if not os.path.isdir("media/output_Videos"):
+            os.mkdir("media/output_Videos")
+        if not os.path.isdir("media/output_Videos/{}/".format(self.file)):
+            os.mkdir("media/output_Videos/{}".format(self.file))
+
         while self.current_frame is not None:
             """
             Customizations for the Saved video
@@ -303,6 +310,13 @@ class DeepSenseTrafficManagement:
                 time.sleep(5)
                 print("Exiting Source Thread")
                 break
+            if (self.elapsed / self.frame_rate) % 30 == 0:
+                date = datetime.now().strftime("%d/%M/%Y %H:%M:%S")
+                OUTPUT_FILE_NAME = "media/output_Videos/{}/{}_{}.mp4".format(self.file, self.file, date)
+                if self.out:
+                    self.out.release()
+                self.out = cv2.VideoWriter(OUTPUT_FILE_NAME, self.fourcc, self.frame_rate, (self.fwidth, self.fheight),
+                                           True)
             self.elapsed += 1
             vehicle_count = self.Tracker.vehicle_count
             if (self.elapsed / self.frame_rate) % settings.MOVING_AVERAGE_WINDOW == 0:
@@ -312,118 +326,118 @@ class DeepSenseTrafficManagement:
                 csv_file.flush()
                 VideoLog.objects.create(video_id=self.video_id, data=str(vehicle_count))
             # VehicleCount.objects.create()
-            # FONT = cv2.FONT_HERSHEY_SIMPLEX
-            # FONT_SCALE = 0.4
-            # FONT_SCALE_HEADING = 0.6
-            # FONT_COLOR = (0, 0, 0)
-            # RATIO_OF_BELOW_BOX = 0.35
-            # frame = self.current_frame
-            # # frame = cv2.resize(self.current_frame, None, fx=self.VIDEO_SCALE_RATIO, fy=self.VIDEO_SCALE_RATIO,
-            # #                    interpolation=cv2.INTER_LINEAR)
-            # frame = cv2.cvtColor(frame, cv2.COLOR_BGR2BGRA)
-            # width = frame.shape[1]
-            # height = frame.shape[0]
-            # img_path = 'icons/bosch.png'
-            # logo = cv2.imread(img_path, -1)
-            # watermark = image_resize(logo, height=50)
-            # watermark = cv2.cvtColor(watermark, cv2.COLOR_BGR2BGRA)
-            # overlay = np.zeros((height, width, 4), dtype='uint8')
-            # watermark_h, watermark_w, watermark_c = watermark.shape
-            # for i in range(0, watermark_h):
-            #     for j in range(0, watermark_w):
-            #         if watermark[i, j][3] != 0:
-            #             overlay[10 + i, 10 + j] = watermark[i, j]
-            # cv2.addWeighted(overlay, 1, frame, 1, 0, frame)
-            # frame = cv2.cvtColor(frame, cv2.COLOR_BGRA2BGR)
-            # width = frame.shape[1]
-            # height = round(frame.shape[0] * RATIO_OF_BELOW_BOX)
-            # blank_image = np.zeros((height, width, 3), np.uint8)
-            # blank_image[np.where((blank_image == [0, 0, 0]).all(axis=2))] = [240, 240, 240]
-            # cv2.putText(frame, "DeepSense", (width - int(width * 0.25), round(height * 0.2)), FONT, 1,
-            #             (255, 255, 255), 2)
-            # """
-            # This part of code displays the algorithm's output to the canvas
-            # """
-            #
-            # self.elapsed += 1
-            #
-            # vehicle_count = self.Tracker.vehicle_count
-            # """
-            # Adding text to Output Video
-            # """
-            # # Car Data
-            # cv2.putText(blank_image, 'Vehicle Type', (30, 30), FONT, FONT_SCALE_HEADING, FONT_COLOR, 1)
-            # cv2.putText(blank_image, 'Count (Y/N)', (30, 50), FONT, FONT_SCALE, FONT_COLOR, 1)
-            # cv2.putText(blank_image, 'Toll(Y/N)', (30, 70), FONT, FONT_SCALE, FONT_COLOR, 1)
-            # cv2.putText(blank_image, 'In Flow', (30, 90), FONT, FONT_SCALE, FONT_COLOR, 1)
-            # cv2.putText(blank_image, 'Out Flow', (30, 110), FONT, FONT_SCALE, FONT_COLOR, 1)
-            # cv2.putText(blank_image, 'Avg In Flow', (30, 130), FONT, FONT_SCALE, FONT_COLOR, 1)
-            # cv2.putText(blank_image, 'Avg Out Flow', (30, 150), FONT, FONT_SCALE, FONT_COLOR, 1)
-            #
-            # # Car Data:
-            # cv2.putText(blank_image, 'Car', (180, 30), FONT, FONT_SCALE_HEADING, FONT_COLOR, 1)
-            # cv2.putText(blank_image, 'Yes', (180, 50), FONT, FONT_SCALE, FONT_COLOR,
-            #             1)
-            # cv2.putText(blank_image, 'No', (180, 70), FONT, FONT_SCALE, FONT_COLOR, 1)
-            # cv2.putText(blank_image, '{}'.format(vehicle_count[0]), (180, 90), FONT, FONT_SCALE, FONT_COLOR, 1)
-            # cv2.putText(blank_image, '{}'.format(vehicle_count[4]), (180, 110), FONT, FONT_SCALE, FONT_COLOR, 1)
-            # cv2.putText(blank_image, '{}'.format(vehicle_count[7]), (180, 130), FONT, FONT_SCALE, FONT_COLOR, 1)
-            # cv2.putText(blank_image, '{}'.format(vehicle_count[10]), (180, 150), FONT, FONT_SCALE, FONT_COLOR,
-            #             1)
-            #
-            # # Bus Data:
-            # cv2.putText(blank_image, 'Bus', (255, 30), FONT, FONT_SCALE_HEADING, FONT_COLOR, 1)
-            # cv2.putText(blank_image, 'Yes', (255, 50), FONT, FONT_SCALE, FONT_COLOR,
-            #             1)
-            # cv2.putText(blank_image, 'No', (255, 70), FONT, FONT_SCALE, FONT_COLOR, 1)
-            # cv2.putText(blank_image, '{}'.format(vehicle_count[1]), (255, 90), FONT, FONT_SCALE, FONT_COLOR, 1)
-            # cv2.putText(blank_image, '{}'.format(vehicle_count[5]), (255, 110), FONT, FONT_SCALE, FONT_COLOR, 1)
-            # cv2.putText(blank_image, '{}'.format(vehicle_count[8]), (255, 130), FONT, FONT_SCALE, FONT_COLOR, 1)
-            # cv2.putText(blank_image, '{}'.format(vehicle_count[11]), (255, 150), FONT, FONT_SCALE, FONT_COLOR,
-            #             1)
-            #
-            # # Bike Data:
-            # cv2.putText(blank_image, 'Bike', (330, 30), FONT, FONT_SCALE_HEADING, FONT_COLOR, 1)
-            # cv2.putText(blank_image, 'Yes', (330, 50), FONT, FONT_SCALE,
-            #             FONT_COLOR, 1)
-            # cv2.putText(blank_image, 'No', (330, 70), FONT, FONT_SCALE, FONT_COLOR, 1)
-            # cv2.putText(blank_image, '{}'.format(vehicle_count[2]), (330, 90), FONT, FONT_SCALE, FONT_COLOR, 1)
-            # cv2.putText(blank_image, '{}'.format(vehicle_count[6]), (330, 110), FONT, FONT_SCALE, FONT_COLOR, 1)
-            # cv2.putText(blank_image, '{}'.format(vehicle_count[9]), (330, 130), FONT, FONT_SCALE, FONT_COLOR, 1)
-            # cv2.putText(blank_image, '{}'.format(vehicle_count[12]), (330, 150), FONT, FONT_SCALE, FONT_COLOR,
-            #             1)
-            #
-            # # Truck Data:
-            # cv2.putText(blank_image, 'Truck', (405, 30), FONT, FONT_SCALE_HEADING, FONT_COLOR, 1)
-            # cv2.putText(blank_image, 'No', (405, 50), FONT, FONT_SCALE, FONT_COLOR, 1)
-            # cv2.putText(blank_image, 'No', (405, 70), FONT, FONT_SCALE, FONT_COLOR, 1)
-            # cv2.putText(blank_image, '0', (405, 90), FONT, FONT_SCALE, FONT_COLOR, 1)
-            # cv2.putText(blank_image, '0', (405, 110), FONT, FONT_SCALE, FONT_COLOR, 1)
-            # cv2.putText(blank_image, '0', (405, 130), FONT, FONT_SCALE, FONT_COLOR, 1)
-            # cv2.putText(blank_image, '0', (405, 150), FONT, FONT_SCALE, FONT_COLOR, 1)
-            #
-            # # Rickshaw Data:
-            # cv2.putText(blank_image, 'Three Wheeler', (480, 30), FONT, FONT_SCALE_HEADING, FONT_COLOR, 1)
-            # cv2.putText(blank_image, 'No', (480, 50), FONT, FONT_SCALE, FONT_COLOR, 1)
-            # cv2.putText(blank_image, 'No', (480, 70), FONT, FONT_SCALE, FONT_COLOR, 1)
-            # cv2.putText(blank_image, '0', (480, 90), FONT, FONT_SCALE, FONT_COLOR, 1)
-            # cv2.putText(blank_image, '0', (480, 110), FONT, FONT_SCALE, FONT_COLOR, 1)
-            # cv2.putText(blank_image, '0', (480, 130), FONT, FONT_SCALE, FONT_COLOR, 1)
-            # cv2.putText(blank_image, '0', (480, 150), FONT, FONT_SCALE, FONT_COLOR, 1)
-            #
-            # # Tractor Data:
-            # cv2.putText(blank_image, 'Tractor', (630, 30), FONT, FONT_SCALE_HEADING, FONT_COLOR, 1)
-            # cv2.putText(blank_image, 'No', (630, 50), FONT, FONT_SCALE, FONT_COLOR, 1)
-            # cv2.putText(blank_image, 'No', (630, 70), FONT, FONT_SCALE, FONT_COLOR, 1)
-            # cv2.putText(blank_image, '0', (630, 90), FONT, FONT_SCALE, FONT_COLOR, 1)
-            # cv2.putText(blank_image, '0', (630, 110), FONT, FONT_SCALE, FONT_COLOR, 1)
-            # cv2.putText(blank_image, '0', (630, 130), FONT, FONT_SCALE, FONT_COLOR, 1)
-            # cv2.putText(blank_image, '0', (630, 150), FONT, FONT_SCALE, FONT_COLOR, 1)
-            # img = np.row_stack((frame, blank_image))
-            # self.out.write(img)
+            FONT = cv2.FONT_HERSHEY_SIMPLEX
+            FONT_SCALE = 0.4
+            FONT_SCALE_HEADING = 0.6
+            FONT_COLOR = (0, 0, 0)
+            RATIO_OF_BELOW_BOX = 0.35
+            frame = self.current_frame
+            # frame = cv2.resize(self.current_frame, None, fx=self.VIDEO_SCALE_RATIO, fy=self.VIDEO_SCALE_RATIO,
+            #                    interpolation=cv2.INTER_LINEAR)
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2BGRA)
+            width = frame.shape[1]
+            height = frame.shape[0]
+            img_path = 'icons/bosch.png'
+            logo = cv2.imread(img_path, -1)
+            watermark = image_resize(logo, height=50)
+            watermark = cv2.cvtColor(watermark, cv2.COLOR_BGR2BGRA)
+            overlay = np.zeros((height, width, 4), dtype='uint8')
+            watermark_h, watermark_w, watermark_c = watermark.shape
+            for i in range(0, watermark_h):
+                for j in range(0, watermark_w):
+                    if watermark[i, j][3] != 0:
+                        overlay[10 + i, 10 + j] = watermark[i, j]
+            cv2.addWeighted(overlay, 1, frame, 1, 0, frame)
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGRA2BGR)
+            width = frame.shape[1]
+            height = round(frame.shape[0] * RATIO_OF_BELOW_BOX)
+            blank_image = np.zeros((height, width, 3), np.uint8)
+            blank_image[np.where((blank_image == [0, 0, 0]).all(axis=2))] = [240, 240, 240]
+            cv2.putText(frame, "DeepSense", (width - int(width * 0.25), round(height * 0.2)), FONT, 1,
+                        (255, 255, 255), 2)
+            """
+            This part of code displays the algorithm's output to the canvas
+            """
+
+            self.elapsed += 1
+
+            vehicle_count = self.Tracker.vehicle_count
+            """
+            Adding text to Output Video
+            """
+            # Car Data
+            cv2.putText(blank_image, 'Vehicle Type', (30, 30), FONT, FONT_SCALE_HEADING, FONT_COLOR, 1)
+            cv2.putText(blank_image, 'Count (Y/N)', (30, 50), FONT, FONT_SCALE, FONT_COLOR, 1)
+            cv2.putText(blank_image, 'Toll(Y/N)', (30, 70), FONT, FONT_SCALE, FONT_COLOR, 1)
+            cv2.putText(blank_image, 'In Flow', (30, 90), FONT, FONT_SCALE, FONT_COLOR, 1)
+            cv2.putText(blank_image, 'Out Flow', (30, 110), FONT, FONT_SCALE, FONT_COLOR, 1)
+            cv2.putText(blank_image, 'Avg In Flow', (30, 130), FONT, FONT_SCALE, FONT_COLOR, 1)
+            cv2.putText(blank_image, 'Avg Out Flow', (30, 150), FONT, FONT_SCALE, FONT_COLOR, 1)
+
+            # Car Data:
+            cv2.putText(blank_image, 'Car', (180, 30), FONT, FONT_SCALE_HEADING, FONT_COLOR, 1)
+            cv2.putText(blank_image, 'Yes', (180, 50), FONT, FONT_SCALE, FONT_COLOR,
+                        1)
+            cv2.putText(blank_image, 'No', (180, 70), FONT, FONT_SCALE, FONT_COLOR, 1)
+            cv2.putText(blank_image, '{}'.format(vehicle_count[0]), (180, 90), FONT, FONT_SCALE, FONT_COLOR, 1)
+            cv2.putText(blank_image, '{}'.format(vehicle_count[4]), (180, 110), FONT, FONT_SCALE, FONT_COLOR, 1)
+            cv2.putText(blank_image, '{}'.format(vehicle_count[7]), (180, 130), FONT, FONT_SCALE, FONT_COLOR, 1)
+            cv2.putText(blank_image, '{}'.format(vehicle_count[10]), (180, 150), FONT, FONT_SCALE, FONT_COLOR,
+                        1)
+
+            # Bus Data:
+            cv2.putText(blank_image, 'Bus', (255, 30), FONT, FONT_SCALE_HEADING, FONT_COLOR, 1)
+            cv2.putText(blank_image, 'Yes', (255, 50), FONT, FONT_SCALE, FONT_COLOR,
+                        1)
+            cv2.putText(blank_image, 'No', (255, 70), FONT, FONT_SCALE, FONT_COLOR, 1)
+            cv2.putText(blank_image, '{}'.format(vehicle_count[1]), (255, 90), FONT, FONT_SCALE, FONT_COLOR, 1)
+            cv2.putText(blank_image, '{}'.format(vehicle_count[5]), (255, 110), FONT, FONT_SCALE, FONT_COLOR, 1)
+            cv2.putText(blank_image, '{}'.format(vehicle_count[8]), (255, 130), FONT, FONT_SCALE, FONT_COLOR, 1)
+            cv2.putText(blank_image, '{}'.format(vehicle_count[11]), (255, 150), FONT, FONT_SCALE, FONT_COLOR,
+                        1)
+
+            # Bike Data:
+            cv2.putText(blank_image, 'Bike', (330, 30), FONT, FONT_SCALE_HEADING, FONT_COLOR, 1)
+            cv2.putText(blank_image, 'Yes', (330, 50), FONT, FONT_SCALE,
+                        FONT_COLOR, 1)
+            cv2.putText(blank_image, 'No', (330, 70), FONT, FONT_SCALE, FONT_COLOR, 1)
+            cv2.putText(blank_image, '{}'.format(vehicle_count[2]), (330, 90), FONT, FONT_SCALE, FONT_COLOR, 1)
+            cv2.putText(blank_image, '{}'.format(vehicle_count[6]), (330, 110), FONT, FONT_SCALE, FONT_COLOR, 1)
+            cv2.putText(blank_image, '{}'.format(vehicle_count[9]), (330, 130), FONT, FONT_SCALE, FONT_COLOR, 1)
+            cv2.putText(blank_image, '{}'.format(vehicle_count[12]), (330, 150), FONT, FONT_SCALE, FONT_COLOR,
+                        1)
+
+            # Truck Data:
+            cv2.putText(blank_image, 'Truck', (405, 30), FONT, FONT_SCALE_HEADING, FONT_COLOR, 1)
+            cv2.putText(blank_image, 'No', (405, 50), FONT, FONT_SCALE, FONT_COLOR, 1)
+            cv2.putText(blank_image, 'No', (405, 70), FONT, FONT_SCALE, FONT_COLOR, 1)
+            cv2.putText(blank_image, '0', (405, 90), FONT, FONT_SCALE, FONT_COLOR, 1)
+            cv2.putText(blank_image, '0', (405, 110), FONT, FONT_SCALE, FONT_COLOR, 1)
+            cv2.putText(blank_image, '0', (405, 130), FONT, FONT_SCALE, FONT_COLOR, 1)
+            cv2.putText(blank_image, '0', (405, 150), FONT, FONT_SCALE, FONT_COLOR, 1)
+
+            # Rickshaw Data:
+            cv2.putText(blank_image, 'Three Wheeler', (480, 30), FONT, FONT_SCALE_HEADING, FONT_COLOR, 1)
+            cv2.putText(blank_image, 'No', (480, 50), FONT, FONT_SCALE, FONT_COLOR, 1)
+            cv2.putText(blank_image, 'No', (480, 70), FONT, FONT_SCALE, FONT_COLOR, 1)
+            cv2.putText(blank_image, '0', (480, 90), FONT, FONT_SCALE, FONT_COLOR, 1)
+            cv2.putText(blank_image, '0', (480, 110), FONT, FONT_SCALE, FONT_COLOR, 1)
+            cv2.putText(blank_image, '0', (480, 130), FONT, FONT_SCALE, FONT_COLOR, 1)
+            cv2.putText(blank_image, '0', (480, 150), FONT, FONT_SCALE, FONT_COLOR, 1)
+
+            # Tractor Data:
+            cv2.putText(blank_image, 'Tractor', (630, 30), FONT, FONT_SCALE_HEADING, FONT_COLOR, 1)
+            cv2.putText(blank_image, 'No', (630, 50), FONT, FONT_SCALE, FONT_COLOR, 1)
+            cv2.putText(blank_image, 'No', (630, 70), FONT, FONT_SCALE, FONT_COLOR, 1)
+            cv2.putText(blank_image, '0', (630, 90), FONT, FONT_SCALE, FONT_COLOR, 1)
+            cv2.putText(blank_image, '0', (630, 110), FONT, FONT_SCALE, FONT_COLOR, 1)
+            cv2.putText(blank_image, '0', (630, 130), FONT, FONT_SCALE, FONT_COLOR, 1)
+            cv2.putText(blank_image, '0', (630, 150), FONT, FONT_SCALE, FONT_COLOR, 1)
+            img = np.row_stack((frame, blank_image))
+            self.out.write(img)
             self.current_frame = self.get_postprocessed()
         # self.exit_threads = True
-        # self.out.release()
+        self.out.release()
         csv_file.close()
         self.source.release()
         if not self.exit_threads:

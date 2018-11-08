@@ -22,21 +22,21 @@ if os.environ.get("SERVER", False):
         while True:
             try:
                 counter, frame, video_id = buffer_queue.get()
-                with tf.device("/cpu:0"):
-                    preprocessed = tfnet.framework.preprocess(frame)
+            # with tf.device("/cpu:0"):
+                preprocessed = tfnet.framework.preprocess(frame)
 
-                    buffer_inp = list()
-                    buffer_pre = list()
-                    buffer_inp.append(frame)
-                    buffer_pre.append(preprocessed)
+                buffer_inp = list()
+                buffer_pre = list()
+                buffer_inp.append(frame)
+                buffer_pre.append(preprocessed)
 
-                    feed_dict = {tfnet.inp: buffer_pre}
-                with tf.device("/gpu:0"):
-                    net_out = tfnet.sess.run(tfnet.out, feed_dict)
+                feed_dict = {tfnet.inp: buffer_pre}
+            # with tf.device("/gpu:0"):
+                net_out = tfnet.sess.run(tfnet.out, feed_dict)
 
-                with tf.device("/cpu:0"):
-                    for img, single_out in zip(buffer_inp, net_out):
-                        tfnet.framework.postprocess(single_out, img, resultQueue, video_id, counter=counter)
+            # with tf.device("/cpu:0"):
+                for img, single_out in zip(buffer_inp, net_out):
+                    tfnet.framework.postprocess(single_out, img, resultQueue, video_id, counter=counter)
 
             except KeyboardInterrupt:
                 print("Keyboard Interrupt. Exiting Worker {}".format(worker_id))

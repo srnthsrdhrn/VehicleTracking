@@ -1,4 +1,5 @@
 import json
+import os
 import time
 from queue import PriorityQueue, Queue
 from threading import Thread
@@ -74,6 +75,8 @@ def draw_canvas(request, pk):
         if video.file:
             cap = cv2.VideoCapture(video.file.path)
             ret, frame = cap.read()
+            if not os.path.isdir("media/tmp"):
+                os.mkdir("media/tmp")
             path = "media/tmp/{}.jpg".format(video.file.name.split(".")[0])
             cv2.imwrite(path, frame)
             cap.release()

@@ -124,3 +124,4 @@ media/processed/
 darkflow/summary/
 *.m4v
 *.env
+darkflow/cython_utils/
