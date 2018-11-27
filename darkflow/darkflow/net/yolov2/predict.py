@@ -104,12 +104,7 @@ def postprocess(self, net_out, im, resultQueue, video_id, counter):
             if mess not in self.FLAGS.trackObj:
                 continue
             elif self.FLAGS.tracker == "sort":
-                if (mess == 'car') and (confidence >= 0.3):
-                    detections.append(np.array([left, top, right, bot]).astype(np.float64))
-                if (mess == 'bus') and (confidence >= 0.5):
-                    detections.append(np.array([left, top, right, bot]).astype(np.float64))
-                if (mess == 'motorbike') and (confidence >= 0.15):
-                    detections.append(np.array([left, top, right, bot]).astype(np.float64))
+                detections.append(np.array([left, top, right, bot]).astype(np.float64))
 
         if len(detections) < 3 and self.FLAGS.BK_MOG:
             detections = detections + extract_boxes(self, None)

@@ -1,3 +1,4 @@
 *.sqlite
 media/
 summary/
+/Data.zip

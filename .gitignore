@@ -124,4 +124,9 @@ media/processed/
 darkflow/summary/
 *.m4v
 *.env
+Dataset/
+Auto/
+Data/
+Data.zip
+
 darkflow/cython_utils/

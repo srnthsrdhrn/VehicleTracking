@@ -128,4 +128,4 @@ CRISPY_TEMPLATE_PACK = 'bootstrap3'
 resultQueueDict = {}
 bufferQueueDict = {}
 # Moving Average Window in Seconds
-MOVING_AVERAGE_WINDOW = 9
+MOVING_AVERAGE_WINDOW = 1

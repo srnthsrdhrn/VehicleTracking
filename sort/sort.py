@@ -215,7 +215,7 @@ def associate_detections_to_trackers(detections, trackers, iou_threshold=0.1):
 
 
 class Sort(object):
-    def __init__(self, max_age=1, min_hits=3):
+    def __init__(self, max_age=5, min_hits=3):
         """
         Sets key parameters for SORT
         """
@@ -226,7 +226,18 @@ class Sort(object):
         self.ch = []
         self.ch1 = []
         self.name = []
-        self.vehicle_count = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        self.vehicle_count = {
+                'small-car': [0, 0],
+                'big-car': [0, 0],
+                'bus': [0, 0],
+                'truck': [0, 0],
+                'three-wheeler': [0, 0],
+                'two-wheeler': [0, 0],
+                'lcv': [0, 0],
+                'bicycle': [0, 0],
+                'people': [0, 0],
+                'auto-rickshaw': [0, 0]
+            }
         self.car_c_neg = []
         self.bus_c_neg = []
         self.motorbike_c_neg = []
@@ -250,12 +261,16 @@ class Sort(object):
         self.POSITIVE_VELOCITY_THRESHOLD = 2
         self.NEGATIVE_VELOCITY_THRESHOLD = 5
 
-    def update(self, dets, box_results):
+    def update(self, dets, box_results, csv_file=None, csv_writer=None, timestamp=None, testing=False):
         """
         Requires: this method must be called once for each frame even with empty detections.
         Returns the a similar array, where the last column is the object ID.
         NOTE: The number of objects returned may differ from the number of detections provided.*
 
+        :param testing: Boolean Variable to indicate if the current run is a test run
+        :param timestamp: The current time stamp at which the frame was processed
+        :param csv_writer: The CSV writer object to write to the csv file
+        :param csv_file: The CSV file object to flush the buffers after every write
         :param dets: a numpy array of detections in the format [[x1,y1,x2,y2,score],[x1,y1,x2,y2,score],...]
         :param box_results: The bounding boxes for the detections
         :return:
@@ -267,13 +282,34 @@ class Sort(object):
             self.ch = []
             self.ch1 = []
             self.name = []
-            self.vehicle_count = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-            self.car_c_neg = []
-            self.bus_c_neg = []
-            self.motorbike_c_neg = []
-            self.car_c_pos = []
-            self.bus_c_pos = []
-            self.motorbike_c_pos = []
+            self.vehicle_count = {
+                'small-car': [0, 0],
+                'big-car': [0, 0],
+                'bus': [0, 0],
+                'truck': [0, 0],
+                'three-wheeler': [0, 0],
+                'two-wheeler': [0, 0],
+                'lcv': [0, 0],
+                'bicycle': [0, 0],
+                'people': [0, 0],
+                'auto-rickshaw': [0, 0]
+            }
+            """
+            Vehicle Count is a dictionary containing the count of the vehicles.
+            Eg: {
+                "small_car" = [3,4],
+                "big_car" = [2,3]
+                }
+            Each item in the dictionary is a list containing the date of the format: [in,out]
+            """
+
+            """ Variables for Moving Average Calculation"""
+            # self.car_c_neg = []
+            # self.bus_c_neg = []
+            # self.motorbike_c_neg = []
+            # self.car_c_pos = []
+            # self.bus_c_pos = []
+            # self.motorbike_c_pos = []
         self.frame_count += 1
         trks = np.zeros((len(self.trackers), 5))
         to_del = []
@@ -357,7 +393,8 @@ class Sort(object):
                     """
                     Checking if the Kalman prediction is within the permissible limits
                     """
-                    if ((full_info[2]) - 30) <= de <= ((full_info[2]) + 30) and ((full_info[0]) - 90) <= cd <= ((full_info[0]) + 90):
+                    if ((full_info[2]) - 30) <= de <= ((full_info[2]) + 30) and ((full_info[0]) - 90) <= cd <= (
+                            (full_info[0]) + 90):
                         global vehicle_name
                         vehicle_name = full_info[4]
                         break
@@ -367,16 +404,15 @@ class Sort(object):
                     """
                     Checks if the line segment intersects the borders of the bounding box
                     """
-                    if self.verify_line_intersection(slope_line, constant, x1, x2, y1, y2):
-                        if vehicle_name == 'car':
-                            self.vehicle_count[0] += 1
-                            self.ch1.append(c)
-                        if vehicle_name == 'bus':
-                            self.vehicle_count[1] += 1
-                            self.ch1.append(c)
-                        if vehicle_name == 'motorbike':
-                            self.vehicle_count[2] += 1
-                            self.ch1.append(c)
+
+                    if vehicle_name != 'nothing' and self.verify_line_intersection(slope_line, constant, x1, x2, y1,
+                                                                                   y2):
+                        self.ch1.append(c)
+                        self.vehicle_count[vehicle_name][1] += 1
+                        if testing:
+                            csv_writer.writerow([timestamp, vehicle_name])
+                            csv_file.flush()
+
             """
             Calculating for positive velocity.
             """
@@ -390,47 +426,43 @@ class Sort(object):
                     else:
                         vehicle_name = 'nothing'
                 if c not in self.ch:
-                    if self.verify_line_intersection(slope_line, constant, x1, x2, y1, y2):
-                        if vehicle_name == 'car':
-                            self.vehicle_count[4] = self.vehicle_count[4] + 1
-                            self.ch.append(c)
-                        if vehicle_name == 'bus':
-                            self.vehicle_count[5] = self.vehicle_count[5] + 1
-                            self.ch.append(c)
-                        if vehicle_name == 'motorbike':
-                            self.vehicle_count[6] = self.vehicle_count[6] + 1
-                            self.ch.append(c)
-            # self.vehicle_count[3] = avg_vel
-            b = np.append(b, self.vehicle_count)
-            a = np.array([b])
-            ret[t] = np.array(a)
+                    if vehicle_name != 'nothing' and self.verify_line_intersection(slope_line, constant, x1, x2, y1,
+                                                                                   y2):
+                        self.ch1.append(c)
+                        self.vehicle_count[vehicle_name][0] += 1
+                        if testing:
+                            csv_writer.writerow([timestamp, vehicle_name])
+                            csv_file.flush()
+            ret[t] = b
         """
+        Moving Average Calculation
+        
         Appending count
         c_neg = Count Negative | in flow
         c_pos = Count Positive | out flow
         """
-        if self.frame_count /self.frame_rate % (settings.MOVING_AVERAGE_WINDOW) == 0:
-            """
-            Moving Average Calculation
-            """
-            self.vehicle_count[7] = self.vehicle_count[0] - self.prev_car_c_neg
-            self.vehicle_count[8] = self.vehicle_count[1] - self.prev_bus_c_neg
-            self.vehicle_count[9] = self.vehicle_count[2] - self.prev_motorbike_c_neg
-            self.vehicle_count[10] = self.vehicle_count[4] - self.prev_car_c_pos
-            self.vehicle_count[11] = self.vehicle_count[5] - self.prev_bus_c_pos
-            self.vehicle_count[12] = self.vehicle_count[6] - self.prev_motorbike_c_pos
-            """
-            Updating history
-            """
-            self.prev_car_c_neg = self.vehicle_count[0]
-            self.prev_bus_c_neg = self.vehicle_count[1]
-            self.prev_motorbike_c_neg = self.vehicle_count[2]
-            self.prev_car_c_pos = self.vehicle_count[4]
-            self.prev_bus_c_pos = self.vehicle_count[5]
-            self.prev_motorbike_c_pos = self.vehicle_count[6]
+        # if self.frame_count / self.frame_rate % (settings.MOVING_AVERAGE_WINDOW) == 0:
+        #     """
+        #     Moving Average Calculation
+        #     """
+        #     self.vehicle_count[7] = self.vehicle_count[0] - self.prev_car_c_neg
+        #     self.vehicle_count[8] = self.vehicle_count[1] - self.prev_bus_c_neg
+        #     self.vehicle_count[9] = self.vehicle_count[2] - self.prev_motorbike_c_neg
+        #     self.vehicle_count[10] = self.vehicle_count[4] - self.prev_car_c_pos
+        #     self.vehicle_count[11] = self.vehicle_count[5] - self.prev_bus_c_pos
+        #     self.vehicle_count[12] = self.vehicle_count[6] - self.prev_motorbike_c_pos
+        #     """
+        #     Updating history
+        #     """
+        #     self.prev_car_c_neg = self.vehicle_count[0]
+        #     self.prev_bus_c_neg = self.vehicle_count[1]
+        #     self.prev_motorbike_c_neg = self.vehicle_count[2]
+        #     self.prev_car_c_pos = self.vehicle_count[4]
+        #     self.prev_bus_c_pos = self.vehicle_count[5]
+        #     self.prev_motorbike_c_pos = self.vehicle_count[6]
 
         if len(ret) > 0:
-            return np.concatenate(ret)
+            return ret
         return np.empty((0, 5))
 
     def verify_line_boundaries(self, x, y):
@@ -440,10 +472,14 @@ class Sort(object):
         :param y: y co-ordinate of the point
         :return: True if the given point lie within the line segment region
         """
-        y_max = self.line_coordinate[1] if self.line_coordinate[1] > self.line_coordinate[3] else self.line_coordinate[3]
-        y_min = self.line_coordinate[1] if self.line_coordinate[1] < self.line_coordinate[3] else self.line_coordinate[3]
-        x_max = self.line_coordinate[2] if self.line_coordinate[2] > self.line_coordinate[0] else self.line_coordinate[0]
-        x_min = self.line_coordinate[2] if self.line_coordinate[2] < self.line_coordinate[0] else self.line_coordinate[0]
+        y_max = self.line_coordinate[1] if self.line_coordinate[1] > self.line_coordinate[3] else self.line_coordinate[
+            3]
+        y_min = self.line_coordinate[1] if self.line_coordinate[1] < self.line_coordinate[3] else self.line_coordinate[
+            3]
+        x_max = self.line_coordinate[2] if self.line_coordinate[2] > self.line_coordinate[0] else self.line_coordinate[
+            0]
+        x_min = self.line_coordinate[2] if self.line_coordinate[2] < self.line_coordinate[0] else self.line_coordinate[
+            0]
         return (x_min <= x <= x_max) and (y_min <= y <= y_max)
 
     def verify_line_intersection(self, slope_line, constant, x1, x2, y1, y2):
