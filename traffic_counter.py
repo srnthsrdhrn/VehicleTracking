@@ -99,6 +99,7 @@ class DeepSenseTrafficManagement:
                 camera = cv2.VideoCapture(path)
             date = datetime.now().strftime("%d_%m_%Y_%H_%M_%S")
             file = file + "_" + date
+            self.file = file
         else:
             assert os.path.isfile(path), \
                 'file {} does not exist'.format(file)
@@ -133,12 +134,6 @@ class DeepSenseTrafficManagement:
             fheight = img.shape[0]
             fwidth = img.shape[1]
             self.out = cv2.VideoWriter(OUTPUT_FILE_NAME, fourcc, self.frame_rate, (fwidth, fheight), True)
-
-        blank_image = np.zeros((b_height, width, 3), np.uint8)
-        blank_image[np.where((blank_image == [0, 0, 0]).all(axis=2))] = [240, 240, 240]
-        img = np.row_stack((frame, blank_image))
-        self.fheight = img.shape[0]
-        self.fwidth = img.shape[1]
 
         return camera
 
